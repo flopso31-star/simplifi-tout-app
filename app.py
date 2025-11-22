@@ -10,16 +10,44 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- LE DESIGN (CSS) ---
+# --- LE DESIGN (CSS AVANCÉ) ---
 st.markdown("""
     <style>
-    /* Fond d'écran */
+    /* Fond d'écran global */
     .stApp {
         background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
         color: white;
     }
 
-    /* Boutons */
+    /* =========================================
+       NOUVEAU : CSS SPÉCIAL CAMÉRA GRAND ANGLE
+    ========================================= */
+    /* On cible le conteneur de la caméra Streamlit */
+    [data-testid="stCameraInput"] {
+        width: 100%; /* Prend toute la largeur */
+    }
+    
+    /* On cible spécifiquement l'élément VIDÉO à l'intérieur */
+    [data-testid="stCameraInput"] video {
+        /* On force une hauteur de 55% de l'écran du téléphone */
+        height: 55vh !important; 
+        /* On s'assure que l'image remplit bien le cadre sans être déformée */
+        object-fit: cover !important;
+        border-radius: 20px !important;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    /* On cible le bouton "Prendre la photo" SOUS la vidéo */
+    [data-testid="stCameraInput"] button {
+       /* On le rend un peu plus gros et visible */
+       padding: 15px 30px !important;
+       font-weight: bold !important;
+       margin-top: 10px !important; /* Un peu d'espace au dessus du bouton */
+    }
+    /* ========================================= */
+
+
+    /* Styles des autres Boutons (Lancer l'analyse) */
     .stButton>button {
         background: linear-gradient(45deg, #FF416C, #FF4B2B);
         color: white !important;
@@ -62,7 +90,7 @@ if "GOOGLE_API_KEY" in st.secrets:
 elif "api_key" in st.session_state:
     api_key = st.session_state.api_key
 
-# --- BARRE LATÉRALE (Uniquement pour la clé maintenant) ---
+# --- BARRE LATÉRALE (Clé uniquement) ---
 with st.sidebar:
     st.header("⚙️ Réglages techniques")
     if api_key:
@@ -100,14 +128,15 @@ source_image = st.radio(
     label_visibility="collapsed"
 )
 
-st.markdown("---") 
+st.markdown("###") 
 
 entree = None
 type_entree = None
 
-# 2. AFFICHAGE DE L'INPUT
+# 2. AFFICHAGE DE L'INPUT (Caméra agrandie par CSS)
 if source_image == "📸 Caméra":
-    entree = st.camera_input("Photo", label_visibility="collapsed")
+    # Le label est caché pour gagner de la place
+    entree = st.camera_input("Prendre la photo", label_visibility="collapsed")
     type_entree = "img"
 elif source_image == "🖼️ Galerie":
     entree = st.file_uploader("Fichier", type=['png', 'jpg'])
@@ -116,17 +145,17 @@ else:
     entree = st.text_area("Texte à analyser", height=150)
     type_entree = "txt"
 
-# 3. LE BLOC D'ACTION (Apparaît seulement si on a mis quelque chose)
+# 3. LE BLOC D'ACTION
 if entree:
-    # C'est ICI que j'ai déplacé le slider pour qu'il soit évident
-    st.markdown("### 🎚️ Niveau de détail")
+    st.markdown("###")
+    st.markdown("##### 🎚️ Niveau de détail")
     niveau_simplification = st.select_slider(
         "Niveau de détail",
         options=["Enfant (5 ans)", "Normal", "Expert"],
-        label_visibility="collapsed" # On cache le label texte car le titre au dessus suffit
+        label_visibility="collapsed"
     )
     
-    st.markdown("###") # Petit espace
+    st.markdown("###")
     
     if st.button("✨ LANCER L'ANALYSE ✨"):
         with st.spinner("🧠 Analyse en cours..."):
