@@ -2,112 +2,143 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# Configuration de la page
-st.set_page_config(page_title="Simplifi Tout", page_icon="✨", layout="centered")
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(
+    page_title="Simplifi Tout",
+    page_icon="✨",
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
 
-# --- GESTION INTELLIGENTE DE LA CLÉ API ---
+# --- LE DESIGN (CSS) ---
+st.markdown("""
+    <style>
+    /* Fond d'écran */
+    .stApp {
+        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        color: white;
+    }
+
+    /* Boutons */
+    .stButton>button {
+        background: linear-gradient(45deg, #FF416C, #FF4B2B);
+        color: white !important;
+        border: none;
+        border-radius: 25px;
+        padding: 15px 30px;
+        font-size: 18px;
+        font-weight: bold;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    .stButton>button:hover {
+        transform: scale(1.02);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    /* Inputs transparents */
+    .stTextInput>div>div, .stTextArea>div>div, .stSelectbox>div>div {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: white;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Cacher éléments inutiles */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Centrer les titres */
+    h1, h2, h3 { text-align: center; font-family: 'Helvetica Neue', sans-serif; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- GESTION CLÉ API ---
 api_key = None
-
-# 1. D'abord, on regarde dans le coffre-fort du Cloud (Secrets)
 if "GOOGLE_API_KEY" in st.secrets:
     api_key = st.secrets["GOOGLE_API_KEY"]
-
-# 2. Sinon, on regarde dans la mémoire de session (si l'utilisateur l'a déjà rentrée)
 elif "api_key" in st.session_state:
     api_key = st.session_state.api_key
 
-# --- BARRE LATÉRALE ---
+# --- BARRE LATÉRALE (Uniquement pour la clé maintenant) ---
 with st.sidebar:
-    st.header("⚙️ Configuration")
-    
-    # Si la clé a été trouvée automatiquement
+    st.header("⚙️ Réglages techniques")
     if api_key:
-        st.success("✅ Clé API connectée !")
-        st.caption("Mode : Sécurisé Cloud")
+        st.success("✅ Clé API connectée")
     else:
-        # Sinon, on affiche le champ pour la rentrer manuellement
-        input_key = st.text_input("Entrez votre clé API (AIza...)", type="password")
+        input_key = st.text_input("Clé API", type="password")
         if input_key:
             st.session_state.api_key = input_key
-            api_key = input_key
-            st.rerun() # On recharge la page pour valider
+            st.rerun()
 
-    st.markdown("---")
-    niveau_simplification = st.select_slider(
-        "Niveau de simplification",
-        options=["Normal", "Explique-moi comme si j'avais 5 ans", "Ultra Bref"]
-    )
-
-# --- FONCTION D'INTELLIGENCE ---
+# --- FONCTION IA ---
 def analyser_contenu(content, niveau):
     if not api_key:
-        return "⛔ ERREUR : Impossible de trouver une clé API. Vérifiez les Secrets ou entrez-la manuellement."
-    
+        return "⛔ Oups ! La clé API est manquante."
     try:
         genai.configure(api_key=api_key)
-        # On utilise le modèle Flash qui est rapide et gratuit
         model = genai.GenerativeModel('gemini-2.5-flash')
-        
-        prompt_systeme = f"""
-        Tu es l'intelligence 'Simplifi Tout'.
-        Niveau : {niveau}
-        
-        Tâche :
-        1. Résume ce document en 2 phrases claires.
-        2. Y a-t-il quelque chose à payer ou une date limite ? (Si oui, mets-le en GRAS).
-        3. Liste les actions à faire sous forme de "To-Do List".
-        
-        Réponse courte, directe et avec des émojis.
-        """
-        
-        response = model.generate_content([prompt_systeme, content])
+        prompt = f"Tu es un assistant expert. Niveau de simplification demandé : {niveau}. Résume ce document, dis s'il y a un paiement (en GRAS), et liste les actions à faire. Sois joli et utilise des émojis."
+        response = model.generate_content([prompt, content])
         return response.text
-
     except Exception as e:
-        return f"Oups, une erreur technique : {str(e)}"
+        return f"Erreur: {str(e)}"
 
 # --- INTERFACE PRINCIPALE ---
 st.title("✨ Simplifi Tout")
-st.markdown("### 📸 Scanner un document")
+st.caption("Votre assistant administratif personnel")
 
-# Choix de la méthode
+st.markdown("###") 
+
+# 1. CHOIX DE LA SOURCE
 source_image = st.radio(
-    "Source :",
-    ["Prendre une photo (Caméra)", "Importer depuis la Galerie", "Coller du Texte"],
+    "Action :",
+    ["📸 Caméra", "🖼️ Galerie", "✍️ Texte"],
     horizontal=True,
-    label_visibility="collapsed" 
+    label_visibility="collapsed"
 )
 
-entree_utilisateur = None
+st.markdown("---") 
+
+entree = None
 type_entree = None
 
-if source_image == "Prendre une photo (Caméra)":
-    entree_utilisateur = st.camera_input("Cadrez le document", label_visibility="collapsed")
-    type_entree = "image"
+# 2. AFFICHAGE DE L'INPUT
+if source_image == "📸 Caméra":
+    entree = st.camera_input("Photo", label_visibility="collapsed")
+    type_entree = "img"
+elif source_image == "🖼️ Galerie":
+    entree = st.file_uploader("Fichier", type=['png', 'jpg'])
+    type_entree = "img"
+else:
+    entree = st.text_area("Texte à analyser", height=150)
+    type_entree = "txt"
 
-elif source_image == "Importer depuis la Galerie":
-    entree_utilisateur = st.file_uploader("Choisir une image", type=['png', 'jpg', 'jpeg'])
-    type_entree = "image"
-
-elif source_image == "Coller du Texte":
-    entree_utilisateur = st.text_area("Collez le texte ici", height=150)
-    type_entree = "text"
-
-# --- BOUTON D'ACTION ---
-if entree_utilisateur:
-    if type_entree == "image":
-        image_a_traiter = Image.open(entree_utilisateur)
-        if st.button("🚀 Analyser maintenant", type="primary", use_container_width=True):
-            with st.spinner("Le cerveau de l'IA s'active..."):
-                resultat = analyser_contenu(image_a_traiter, niveau_simplification)
-                if "ERREUR" in resultat:
-                    st.error(resultat)
-                else:
-                    st.success("Analyse terminée !")
-                    st.markdown(resultat)
+# 3. LE BLOC D'ACTION (Apparaît seulement si on a mis quelque chose)
+if entree:
+    # C'est ICI que j'ai déplacé le slider pour qu'il soit évident
+    st.markdown("### 🎚️ Niveau de détail")
+    niveau_simplification = st.select_slider(
+        "Niveau de détail",
+        options=["Enfant (5 ans)", "Normal", "Expert"],
+        label_visibility="collapsed" # On cache le label texte car le titre au dessus suffit
+    )
     
-    else: # Texte
-        if st.button("🚀 Analyser le texte", type="primary", use_container_width=True):
-            with st.spinner("Lecture en cours..."):
-                resultat = analyser_contenu(entree_utilisateur, niveau_simplification)
-                st.markdown(resultat)
+    st.markdown("###") # Petit espace
+    
+    if st.button("✨ LANCER L'ANALYSE ✨"):
+        with st.spinner("🧠 Analyse en cours..."):
+            if type_entree == "img":
+                img = Image.open(entree)
+                res = analyser_contenu(img, niveau_simplification)
+            else:
+                res = analyser_contenu(entree, niveau_simplification)
+            
+            st.markdown("---")
+            st.markdown(f"""
+            <div style="background-color: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; border-left: 5px solid #FF4B2B;">
+                {res}
+            </div>
+            """, unsafe_allow_html=True)
