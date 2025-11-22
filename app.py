@@ -37,12 +37,17 @@ st.markdown("""
         border: 3px solid rgba(255, 255, 255, 0.3);
     }
     
-    /* On cible le bouton "Prendre la photo" SOUS la vidéo */
+   /* On cible le bouton "Prendre la photo" SOUS la vidéo */
     [data-testid="stCameraInput"] button {
-       /* On le rend un peu plus gros et visible */
+       color: white !important;  /* Texte blanc */
+       background: linear-gradient(45deg, #FF416C, #FF4B2B) !important; /* Fond coloré */
+       border: none !important;
+       border-radius: 25px !important;
        padding: 15px 30px !important;
        font-weight: bold !important;
-       margin-top: 10px !important; /* Un peu d'espace au dessus du bouton */
+       margin-top: 15px !important;
+       text-transform: uppercase; /* Met le texte en majuscules pour être bien lisible */
+       box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important;
     }
     /* ========================================= */
 
@@ -171,3 +176,4 @@ if entree:
                 {res}
             </div>
             """, unsafe_allow_html=True)
+
