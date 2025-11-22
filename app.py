@@ -113,7 +113,17 @@ def analyser_contenu(content, niveau):
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.5-flash')
-        prompt = f"Tu es un assistant expert. Niveau de simplification demandé : {niveau}. Résume ce document, dis s'il y a un paiement (en GRAS), et liste les actions à faire. Sois joli et utilise des émojis."
+        prompt = f"""
+        Tu es un expert en synthèse administrative et juridique. Niveau de détail : {niveau}.
+        
+        Ta mission :
+        1. IDENTIFICATION : Qui écrit ? Quelle est la date du document ? De quoi ça parle (en 1 phrase) ?
+        2. ANALYSE FINANCIÈRE : Y a-t-il un montant à payer ou à recevoir ? Si oui, écris le MONTANT et la DATE LIMITE en GRAS. Sinon, écris "Aucun mouvement financier".
+        3. ACTIONS REQUISES : Liste les actions concrètes à effectuer sous forme de tirets. Si aucune action, précise "Document à classer".
+        4. PIÈGES : Signale s'il y a des pénalités de retard ou des conditions particulières en petit caractères.
+
+        Ton ton doit être formel, précis et structuré. Utilise du Markdown pour la mise en page (Gras, Listes).
+        """
         response = model.generate_content([prompt, content])
         return response.text
     except Exception as e:
@@ -176,4 +186,5 @@ if entree:
                 {res}
             </div>
             """, unsafe_allow_html=True)
+
 
