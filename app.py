@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- LE DESIGN (CSS AVANCÉ) ---
+# --- LE DESIGN (CSS AVANCÉ & CORRECTIFS) ---
 st.markdown("""
     <style>
     /* Fond d'écran global */
@@ -20,39 +20,37 @@ st.markdown("""
     }
 
     /* =========================================
-       NOUVEAU : CSS SPÉCIAL CAMÉRA GRAND ANGLE
+       CSS SPÉCIAL CAMÉRA GRAND ANGLE
     ========================================= */
-    /* On cible le conteneur de la caméra Streamlit */
+    /* On cible le conteneur de la caméra */
     [data-testid="stCameraInput"] {
-        width: 100%; /* Prend toute la largeur */
+        width: 100%;
     }
     
-    /* On cible spécifiquement l'élément VIDÉO à l'intérieur */
+    /* On cible la VIDÉO */
     [data-testid="stCameraInput"] video {
-        /* On force une hauteur de 55% de l'écran du téléphone */
         height: 55vh !important; 
-        /* On s'assure que l'image remplit bien le cadre sans être déformée */
         object-fit: cover !important;
         border-radius: 20px !important;
         border: 3px solid rgba(255, 255, 255, 0.3);
     }
     
-   /* On cible le bouton "Prendre la photo" SOUS la vidéo */
+    /* On cible le bouton "Prendre la photo" pour qu'il soit VISIBLE */
     [data-testid="stCameraInput"] button {
-       color: white !important;  /* Texte blanc */
-       background: linear-gradient(45deg, #FF416C, #FF4B2B) !important; /* Fond coloré */
+       color: white !important;
+       background: linear-gradient(45deg, #FF416C, #FF4B2B) !important;
        border: none !important;
        border-radius: 25px !important;
        padding: 15px 30px !important;
        font-weight: bold !important;
        margin-top: 15px !important;
-       text-transform: uppercase; /* Met le texte en majuscules pour être bien lisible */
+       text-transform: uppercase;
        box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important;
     }
     /* ========================================= */
 
 
-    /* Styles des autres Boutons (Lancer l'analyse) */
+    /* Styles des autres Boutons */
     .stButton>button {
         background: linear-gradient(45deg, #FF416C, #FF4B2B);
         color: white !important;
@@ -78,12 +76,12 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
-    /* Cacher éléments inutiles */
+    /* Nettoyage interface */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Centrer les titres */
+    /* Typographie */
     h1, h2, h3 { text-align: center; font-family: 'Helvetica Neue', sans-serif; }
     </style>
     """, unsafe_allow_html=True)
@@ -95,7 +93,7 @@ if "GOOGLE_API_KEY" in st.secrets:
 elif "api_key" in st.session_state:
     api_key = st.session_state.api_key
 
-# --- BARRE LATÉRALE (Clé uniquement) ---
+# --- BARRE LATÉRALE ---
 with st.sidebar:
     st.header("⚙️ Réglages techniques")
     if api_key:
@@ -106,32 +104,48 @@ with st.sidebar:
             st.session_state.api_key = input_key
             st.rerun()
 
-# --- FONCTION IA ---
+# --- FONCTION IA (CERVEAU EXPERT) ---
 def analyser_contenu(content, niveau):
     if not api_key:
         return "⛔ Oups ! La clé API est manquante."
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.5-flash')
-        prompt = f"""
-        Tu es un expert en synthèse administrative et juridique. Niveau de détail : {niveau}.
         
-        Ta mission :
-        1. IDENTIFICATION : Qui écrit ? Quelle est la date du document ? De quoi ça parle (en 1 phrase) ?
-        2. ANALYSE FINANCIÈRE : Y a-t-il un montant à payer ou à recevoir ? Si oui, écris le MONTANT et la DATE LIMITE en GRAS. Sinon, écris "Aucun mouvement financier".
-        3. ACTIONS REQUISES : Liste les actions concrètes à effectuer sous forme de tirets. Si aucune action, précise "Document à classer".
-        4. PIÈGES : Signale s'il y a des pénalités de retard ou des conditions particulières en petit caractères.
+        # LE NOUVEAU PROMPT PRO
+        prompt = f"""
+        Tu es un expert en synthèse administrative et juridique. Niveau de détail demandé : {niveau}.
+        
+        Ta mission est d'analyser ce document et de produire un rapport structuré :
+        
+        1. 📄 IDENTIFICATION
+           - Qui est l'émetteur ?
+           - Quelle est la date du document ?
+           - De quoi ça parle (résumé en 1 phrase simple) ?
 
-        Ton ton doit être formel, précis et structuré. Utilise du Markdown pour la mise en page (Gras, Listes).
+        2. 💰 ANALYSE FINANCIÈRE
+           - Y a-t-il un montant à payer ou à recevoir ? 
+           - Si OUI : Écris le MONTANT et la DATE LIMITE en GRAS.
+           - Si NON : Écris "Aucun mouvement financier".
+
+        3. ✅ ACTIONS REQUISES
+           - Liste les actions concrètes à effectuer (To-Do List).
+           - Si aucune action : précise "Document à classer".
+
+        4. ⚠️ VIGILANCE (PIÈGES)
+           - Signale s'il y a des pénalités, des renouvellements automatiques ou des conditions en petits caractères.
+
+        Ton ton doit être professionnel, rassurant et synthétique.
         """
+        
         response = model.generate_content([prompt, content])
         return response.text
     except Exception as e:
-        return f"Erreur: {str(e)}"
+        return f"Erreur technique : {str(e)}"
 
 # --- INTERFACE PRINCIPALE ---
 st.title("✨ Simplifi Tout")
-st.caption("Votre assistant administratif personnel")
+st.caption("Votre Expert Administratif de Poche")
 
 st.markdown("###") 
 
@@ -148,32 +162,31 @@ st.markdown("###")
 entree = None
 type_entree = None
 
-# 2. AFFICHAGE DE L'INPUT (Caméra agrandie par CSS)
+# 2. AFFICHAGE DE L'INPUT
 if source_image == "📸 Caméra":
-    # Le label est caché pour gagner de la place
     entree = st.camera_input("Prendre la photo", label_visibility="collapsed")
     type_entree = "img"
 elif source_image == "🖼️ Galerie":
     entree = st.file_uploader("Fichier", type=['png', 'jpg'])
     type_entree = "img"
 else:
-    entree = st.text_area("Texte à analyser", height=150)
+    entree = st.text_area("Copier-coller le texte", height=150)
     type_entree = "txt"
 
 # 3. LE BLOC D'ACTION
 if entree:
     st.markdown("###")
-    st.markdown("##### 🎚️ Niveau de détail")
+    st.markdown("##### 🎚️ Niveau d'expertise")
     niveau_simplification = st.select_slider(
         "Niveau de détail",
-        options=["Enfant (5 ans)", "Normal", "Expert"],
+        options=["Synthèse Rapide", "Normal", "Analyse Détaillée"],
         label_visibility="collapsed"
     )
     
     st.markdown("###")
     
     if st.button("✨ LANCER L'ANALYSE ✨"):
-        with st.spinner("🧠 Analyse en cours..."):
+        with st.spinner("🧐 L'expert analyse votre document..."):
             if type_entree == "img":
                 img = Image.open(entree)
                 res = analyser_contenu(img, niveau_simplification)
@@ -181,10 +194,9 @@ if entree:
                 res = analyser_contenu(entree, niveau_simplification)
             
             st.markdown("---")
+            # Affichage du résultat dans une boîte stylisée
             st.markdown(f"""
             <div style="background-color: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; border-left: 5px solid #FF4B2B;">
                 {res}
             </div>
             """, unsafe_allow_html=True)
-
-
