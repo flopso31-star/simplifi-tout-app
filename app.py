@@ -10,41 +10,62 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- DESIGN "LIGHT MODE" & CORRECTIF CAMÉRA ---
+# --- CSS (DESIGN LIGHT + FIX CAMÉRA) ---
 st.markdown("""
     <style>
-    /* 1. FOND D'ÉCRAN CLAIR (Style Bancaire/Pro) */
+    /* 1. FOND ET STRUCTURE */
     .stApp {
-        background-color: #F8F9FA; /* Gris très très clair */
-        color: #31333F; /* Gris foncé pour le texte */
+        background-color: #F8F9FA;
+        color: #31333F;
+    }
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 3rem !important;
     }
 
-    /* 2. CORRECTION CAMÉRA (Le bouton ne gêne plus) */
-    [data-testid="stCameraInput"] {
-        width: 100% !important;
+    /* 2. RÉPARATION DU SÉLECTEUR DE CAMÉRA (SWITCH) */
+    /* On cible la zone qui contient le choix de la caméra */
+    [data-testid="stCameraInput"] > label {
+        display: none !important; /* Cache le label inutile "Prendre photo" du haut */
     }
     
+    /* On cible la liste déroulante (le vrai switch) */
+    [data-testid="stCameraInput"] span {
+        font-weight: bold;
+        color: #2563EB;
+    }
+    
+    /* On agrandit la zone de clic pour changer de caméra */
+    [data-testid="stCameraInput"] small {
+        font-size: 14px !important;
+        background-color: #E0E7FF;
+        color: #2563EB;
+        padding: 8px 15px;
+        border-radius: 20px;
+        display: inline-block;
+        margin-bottom: 10px;
+        border: 1px solid #2563EB;
+    }
+
+    /* 3. LA VIDÉO */
     [data-testid="stCameraInput"] video {
         width: 100% !important;
-        height: 50vh !important; /* Hauteur fixe */
+        height: 45vh !important; /* Un peu moins haut pour laisser la place au switch */
         object-fit: cover !important;
         border-radius: 12px !important;
-        border: 2px solid #E0E0E0; /* Bordure claire */
-        margin-bottom: 10px !important; /* Espace SOUS la vidéo */
+        border: 2px solid #E0E0E0;
     }
     
-    /* Bouton Photo : SOUS la vidéo et en Français via CSS propre */
+    /* 4. LE BOUTON DÉCLENCHEUR (EN BAS) */
     [data-testid="stCameraInput"] button {
-       font-size: 0 !important; /* On cache le texte anglais */
-       background-color: #2563EB !important; /* Bleu Pro */
+       font-size: 0 !important;
+       background-color: #2563EB !important;
        border: none !important;
-       border-radius: 50px !important; /* Bien arrondi */
-       padding: 20px !important;
+       border-radius: 50px !important;
+       padding: 15px !important;
        width: 100% !important;
        margin-top: 5px !important;
     }
-    
-    /* On réécrit le texte en Français proprement */
     [data-testid="stCameraInput"] button::after {
         content: "📸 PRENDRE LA PHOTO";
         font-size: 16px !important;
@@ -52,38 +73,15 @@ st.markdown("""
         display: block;
     }
 
-    /* 3. INPUTS ET CADRES (Sur fond blanc) */
-    .stTextInput>div>div, .stTextArea>div>div, .stSelectbox>div>div {
-        background-color: #FFFFFF; /* Fond blanc */
-        color: #31333F;
+    /* 5. LE RESTE DU DESIGN (PROPRE) */
+    .stTextInput>div>div, .stTextArea>div>div {
+        background-color: #FFFFFF;
         border-radius: 8px;
-        border: 1px solid #D1D5DB; /* Bordure grise */
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        border: 1px solid #D1D5DB;
     }
-
-    /* 4. TRADUCTION BOUTON GALERIE (BROWSE FILES) */
-    [data-testid="stFileUploader"] button {
-        font-size: 0 !important;
-        background-color: #2563EB !important;
-        border: none;
-        border-radius: 8px;
-        width: 100%;
-        height: 50px;
-    }
-    [data-testid="stFileUploader"] button::after {
-        content: "📂 CHOISIR UN FICHIER";
-        font-size: 16px;
-        color: white;
-        display: block;
-    }
-    /* Cache le petit texte drag & drop */
-    [data-testid="stFileUploader"] section > div:first-child span { display: none; }
-    [data-testid="stFileUploader"] section > div:first-child small { display: none; }
-
-
-    /* 5. BOUTON D'ANALYSE */
+    
     .stButton>button {
-        background-color: #10B981; /* Vert "Validation" pour différencier */
+        background-color: #10B981; /* Vert */
         color: white !important;
         border: none;
         border-radius: 8px;
@@ -91,132 +89,95 @@ st.markdown("""
         font-size: 18px;
         font-weight: 700;
         width: 100%;
-        margin-top: 10px;
+        margin-top: 15px;
         box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
     }
-    .stButton>button:hover {
-        background-color: #059669;
-    }
+    .stButton>button:hover { background-color: #059669; }
 
-    /* Nettoyage */
-    .block-container { padding-top: 1rem !important; padding-bottom: 3rem !important; }
     #MainMenu, footer, header {visibility: hidden;}
 
-    /* Header Pro */
     .pro-header {
         text-align: center;
-        margin-bottom: 15px;
-        padding-bottom: 15px;
+        margin-bottom: 10px;
         border-bottom: 2px solid #E5E7EB;
+        padding-bottom: 10px;
     }
     .pro-title {
-        font-size: 26px;
-        font-weight: 800;
-        color: #111827; /* Noir profond */
-        margin: 0;
-        font-family: sans-serif;
-        letter-spacing: -0.5px;
+        font-size: 26px; font-weight: 800; color: #111827; margin: 0; font-family: sans-serif;
     }
-    .pro-subtitle {
-        font-size: 14px;
-        color: #6B7280; /* Gris moyen */
-        margin-top: 5px;
-    }
+    .pro-subtitle { font-size: 14px; color: #6B7280; margin-top: 5px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- GESTION CLÉ API ---
+# --- CLÉ API ---
 api_key = None
 if "GOOGLE_API_KEY" in st.secrets:
     api_key = st.secrets["GOOGLE_API_KEY"]
 elif "api_key" in st.session_state:
     api_key = st.session_state.api_key
 
-# --- BARRE LATÉRALE ---
 with st.sidebar:
     st.header("⚙️ Paramètres")
     if api_key:
-        st.success("✅ Système connecté")
+        st.success("✅ Connecté")
     else:
         input_key = st.text_input("Clé API", type="password")
         if input_key:
             st.session_state.api_key = input_key
             st.rerun()
 
-# --- FONCTION IA ---
+# --- IA ---
 def analyser_contenu(content, niveau):
-    if not api_key:
-        return "⛔ Erreur : Clé API manquante."
+    if not api_key: return "⛔ Clé manquante."
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.5-flash')
-        
-        prompt = f"""
-        Rôle : Expert administratif. Niveau : {niveau}.
-        Langue : Français.
-        
-        Analyse le document :
+        prompt = f"""Rôle : Expert administratif. Niveau : {niveau}.
+        Analyse :
         1. 📄 DOCUMENT (Nature, Date, Émetteur)
-        2. 💰 PAIEMENT (Montant et Date limite -> EN GRAS. Sinon "Aucun")
-        3. ✅ À FAIRE (Liste d'actions claires)
-        4. ⚠️ ATTENTION (Conditions pièges)
+        2. 💰 PAIEMENT (Montant et Date -> EN GRAS. Sinon "Aucun")
+        3. ✅ ACTIONS (Liste claire)
+        4. ⚠️ VIGILANCE (Pièges)
         """
-        
         response = model.generate_content([prompt, content])
         return response.text
-    except Exception as e:
-        return f"Erreur : {str(e)}"
+    except Exception as e: return f"Erreur : {str(e)}"
 
 # --- INTERFACE ---
 st.markdown("""
 <div class="pro-header">
     <h1 class="pro-title">Simplifi Tout</h1>
-    <p class="pro-subtitle">L'administratif devient facile</p>
+    <p class="pro-subtitle">Votre assistant administratif</p>
 </div>
 """, unsafe_allow_html=True)
 
-# Menu Source
-source_image = st.radio(
-    "Source :",
-    ["Caméra", "Galerie", "Texte"],
-    horizontal=True,
-    label_visibility="collapsed"
-)
-
-st.markdown("###") 
+source_image = st.radio("Source :", ["Caméra", "Galerie", "Texte"], horizontal=True, label_visibility="collapsed")
+st.markdown("###")
 
 entree = None
 type_entree = None
 
 if source_image == "Caméra":
+    # Le composant caméra standard
     entree = st.camera_input("Photo", label_visibility="collapsed")
     type_entree = "img"
+    
 elif source_image == "Galerie":
     entree = st.file_uploader("Fichier", type=['png', 'jpg', 'pdf'])
     type_entree = "img"
 else:
-    entree = st.text_area("Collez votre texte ici", height=150)
+    entree = st.text_area("Texte", height=150)
     type_entree = "txt"
 
 if entree:
     st.markdown("###")
-    niveau_simplification = st.select_slider(
-        "Niveau de détail",
-        options=["Synthèse", "Standard", "Détaillé"],
-    )
-    
+    niveau = st.select_slider("Détails", options=["Synthèse", "Standard", "Détaillé"])
     st.markdown("###")
     
     if st.button("LANCER L'ANALYSE"):
         with st.spinner("Analyse en cours..."):
-            if type_entree == "img":
-                img = Image.open(entree)
-                res = analyser_contenu(img, niveau_simplification)
-            else:
-                res = analyser_contenu(entree, niveau_simplification)
-            
+            res = analyser_contenu(Image.open(entree) if type_entree == "img" else entree, niveau)
             st.markdown("---")
-            # Résultat sur fond Blanc avec bordure bleue (Style Papier)
             st.markdown(f"""
             <div style="background-color: #FFFFFF; padding: 25px; border-radius: 12px; border: 1px solid #E5E7EB; box-shadow: 0 4px 6px rgba(0,0,0,0.05); color: #374151;">
                 {res}
