@@ -10,65 +10,83 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- CSS "NUCLEAR FIX" (CORRECTION RADICALE) ---
+# --- CSS (DESIGN LIGHT + FIX TEXTES SÉPARÉS) ---
 st.markdown("""
     <style>
-    /* 1. APP GLOBALE (Mode Clair Pro) */
+    /* 1. APP GLOBALE */
     .stApp {
         background-color: #F8F9FA;
         color: #31333F;
     }
     .block-container {
         padding-top: 1rem !important;
-        padding-bottom: 5rem !important; /* Marge en bas pour scroller */
+        padding-bottom: 5rem !important;
     }
 
-    /* 2. CIBLAGE DE LA CAMÉRA (Le Conteneur) */
+    /* 2. CIBLAGE DE LA CAMÉRA GLOBAL */
     [data-testid="stCameraInput"] {
         width: 100% !important;
-        background: transparent !important;
     }
 
-    /* 3. SUPPRESSION RADICALE DU LABEL DU HAUT */
-    /* On cible le label et on l'écrase complètement */
+    /* -------------------------------------------------------
+       ZONE 1 : LE HAUT (LE LABEL / SWITCH)
+       C'est ici qu'on écrit "INVERSER CAM"
+    ------------------------------------------------------- */
     [data-testid="stCameraInput"] > label {
-        display: none !important;
-        height: 0px !important;
-        margin: 0px !important;
-        padding: 0px !important;
-        visibility: hidden !important;
+        font-size: 0 !important; /* On cache le texte "Prendre la photo" d'origine */
+        display: block !important;
+        visibility: visible !important;
+        margin-bottom: 5px !important;
     }
-    /* On cible aussi le wrapper de texte s'il existe */
-    .st-emotion-cache-1qg05tj {
-        display: none !important;
+    
+    /* On injecte le nouveau texte "INVERSER CAM" */
+    [data-testid="stCameraInput"] > label::after {
+        content: "🔄 INVERSER CAM (TOUCHER ICI)";
+        font-size: 12px !important;
+        font-weight: bold !important;
+        color: #2563EB !important; /* Bleu */
+        background-color: #DBEAFE; /* Fond bleu très clair */
+        padding: 5px 10px !important;
+        border-radius: 15px !important;
+        display: inline-block !important;
+        border: 1px solid #2563EB;
+    }
+    
+    /* On cible le petit texte technique (Select Device) pour le rendre plus gros */
+    [data-testid="stCameraInput"] small {
+        font-size: 14px !important;
+        color: #4B5563 !important;
+        opacity: 1 !important;
     }
 
-    /* 4. LA VIDÉO (Le Cadre) */
+    /* -------------------------------------------------------
+       ZONE 2 : LA VIDÉO (MILIEU)
+    ------------------------------------------------------- */
     [data-testid="stCameraInput"] video {
         width: 100% !important;
-        height: 50vh !important; /* Hauteur fixe : 50% de l'écran */
-        object-fit: cover !important; /* Remplissage sans déformation */
+        height: 50vh !important; /* Hauteur fixe */
+        object-fit: cover !important;
         border-radius: 15px !important;
         border: 2px solid #E5E7EB;
-        margin-bottom: 20px !important; /* <--- C'EST ICI : On pousse le bouton vers le bas */
-        display: block !important;
+        margin-bottom: 10px !important;
     }
 
-    /* 5. LE BOUTON "PRENDRE PHOTO" */
+    /* -------------------------------------------------------
+       ZONE 3 : LE DÉCLENCHEUR (BAS)
+       C'est ici qu'on écrit "PRENDRE PHOTO"
+    ------------------------------------------------------- */
     [data-testid="stCameraInput"] button {
-       position: relative !important; /* On l'empêche de flotter */
        font-size: 0 !important; /* Cache le texte anglais */
        background-color: #2563EB !important; /* Bleu Pro */
        border: none !important;
        border-radius: 12px !important;
        padding: 0px !important;
-       height: 60px !important; /* Hauteur fixe du bouton */
+       height: 60px !important;
        width: 100% !important;
-       margin-top: 10px !important;
-       z-index: 99 !important;
+       margin-top: 5px !important;
     }
     
-    /* Le Texte Français sur le bouton */
+    /* Le Texte Français sur le bouton du bas */
     [data-testid="stCameraInput"] button::after {
         content: "📸 PRENDRE LA PHOTO";
         font-size: 16px !important;
@@ -81,20 +99,7 @@ st.markdown("""
         width: 100%;
     }
 
-    /* 6. SWITCH CAMÉRA (Sélecteur) */
-    /* On rend le sélecteur bien visible */
-    [data-testid="stCameraInput"] small {
-        display: inline-block !important;
-        background-color: #EEF2FF !important;
-        color: #2563EB !important;
-        font-weight: bold !important;
-        border: 1px solid #2563EB !important;
-        padding: 8px 16px !important;
-        border-radius: 20px !important;
-        margin-bottom: 10px !important;
-    }
-
-    /* RESTE DU DESIGN (Propre) */
+    /* 4. RESTE DU DESIGN */
     .stTextInput>div>div, .stTextArea>div>div {
         background-color: #FFFFFF;
         border: 1px solid #D1D5DB;
@@ -108,6 +113,7 @@ st.markdown("""
         font-weight: bold;
         border-radius: 12px;
         border: none;
+        margin-top: 20px;
     }
     #MainMenu, footer, header {visibility: hidden;}
     
@@ -160,7 +166,7 @@ def analyser_contenu(content, niveau):
 st.markdown("""
 <div class="pro-header">
     <h1 class="pro-title">Simplifi Tout</h1>
-    <p class="pro-subtitle">L'administratif facile</p>
+    <p class="pro-subtitle">Votre assistant administratif</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -171,8 +177,8 @@ entree = None
 type_entree = None
 
 if source_image == "Caméra":
-    # On force label_visibility="hidden" au lieu de collapsed pour aider le CSS
-    entree = st.camera_input("Prendre la photo", label_visibility="hidden")
+    # On laisse le label visible car c'est lui qu'on transforme en bouton "Inverser"
+    entree = st.camera_input("Prendre la photo", label_visibility="visible")
     type_entree = "img"
     
 elif source_image == "Galerie":
