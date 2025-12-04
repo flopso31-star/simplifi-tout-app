@@ -10,96 +10,117 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- LE DESIGN (CSS ROBUSTE) ---
+# --- DESIGN "LIGHT MODE" & CORRECTIF CAMÉRA ---
 st.markdown("""
     <style>
-    /* 1. SUPPRESSION DES MARGES */
-    .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 2rem !important;
-    }
-
-    /* 2. FOND D'ÉCRAN PRO */
+    /* 1. FOND D'ÉCRAN CLAIR (Style Bancaire/Pro) */
     .stApp {
-        background-color: #0E1117;
-        color: #FAFAFA;
+        background-color: #F8F9FA; /* Gris très très clair */
+        color: #31333F; /* Gris foncé pour le texte */
     }
 
-    /* 3. CSS SPÉCIAL CAMÉRA (ANTI-RÉTRÉCISSEMENT) */
-    
-    /* On force le bloc global de la caméra à prendre 60% de la hauteur de l'écran */
+    /* 2. CORRECTION CAMÉRA (Le bouton ne gêne plus) */
     [data-testid="stCameraInput"] {
         width: 100% !important;
-        min-height: 60vh !important; /* Hauteur minimale forcée */
     }
     
-    /* On force la vidéo à remplir ce bloc sans changer de ratio */
     [data-testid="stCameraInput"] video {
         width: 100% !important;
-        height: 60vh !important; /* Force la hauteur fixe */
-        object-fit: cover !important; /* Remplit tout le cadre (zoomé) */
+        height: 50vh !important; /* Hauteur fixe */
+        object-fit: cover !important;
         border-radius: 12px !important;
-        border: 1px solid #444;
+        border: 2px solid #E0E0E0; /* Bordure claire */
+        margin-bottom: 10px !important; /* Espace SOUS la vidéo */
     }
     
-    /* On s'assure que le conteneur interne ne s'écrase pas */
-    [data-testid="stCameraInput"] > div {
-        height: 60vh !important;
-    }
-    
-    /* Bouton Photo : Visible et Gros */
+    /* Bouton Photo : SOUS la vidéo et en Français via CSS propre */
     [data-testid="stCameraInput"] button {
-       color: white !important;
-       background-color: #2563EB !important;
+       font-size: 0 !important; /* On cache le texte anglais */
+       background-color: #2563EB !important; /* Bleu Pro */
        border: none !important;
-       border-radius: 8px !important;
-       padding: 15px 30px !important;
-       font-weight: 600 !important;
-       font-size: 16px !important;
-       margin-top: 15px !important;
-       text-transform: uppercase;
-       width: 100%; /* Bouton pleine largeur pour faciliter le clic */
+       border-radius: 50px !important; /* Bien arrondi */
+       padding: 20px !important;
+       width: 100% !important;
+       margin-top: 5px !important;
+    }
+    
+    /* On réécrit le texte en Français proprement */
+    [data-testid="stCameraInput"] button::after {
+        content: "📸 PRENDRE LA PHOTO";
+        font-size: 16px !important;
+        color: white !important;
+        display: block;
     }
 
-    /* 4. BOUTON ANALYSE */
+    /* 3. INPUTS ET CADRES (Sur fond blanc) */
+    .stTextInput>div>div, .stTextArea>div>div, .stSelectbox>div>div {
+        background-color: #FFFFFF; /* Fond blanc */
+        color: #31333F;
+        border-radius: 8px;
+        border: 1px solid #D1D5DB; /* Bordure grise */
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    /* 4. TRADUCTION BOUTON GALERIE (BROWSE FILES) */
+    [data-testid="stFileUploader"] button {
+        font-size: 0 !important;
+        background-color: #2563EB !important;
+        border: none;
+        border-radius: 8px;
+        width: 100%;
+        height: 50px;
+    }
+    [data-testid="stFileUploader"] button::after {
+        content: "📂 CHOISIR UN FICHIER";
+        font-size: 16px;
+        color: white;
+        display: block;
+    }
+    /* Cache le petit texte drag & drop */
+    [data-testid="stFileUploader"] section > div:first-child span { display: none; }
+    [data-testid="stFileUploader"] section > div:first-child small { display: none; }
+
+
+    /* 5. BOUTON D'ANALYSE */
     .stButton>button {
-        background-color: #2563EB;
+        background-color: #10B981; /* Vert "Validation" pour différencier */
         color: white !important;
         border: none;
         border-radius: 8px;
         padding: 15px 0px;
-        font-size: 16px;
-        font-weight: 600;
+        font-size: 18px;
+        font-weight: 700;
         width: 100%;
-        margin-top: 20px;
+        margin-top: 10px;
+        box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
     }
     .stButton>button:hover {
-        background-color: #1D4ED8;
+        background-color: #059669;
     }
 
-    /* 5. Inputs et Cadres */
-    .stTextInput>div>div, .stTextArea>div>div, .stSelectbox>div>div {
-        background-color: #262730;
-        color: white;
-        border-radius: 8px;
-        border: 1px solid #41424C;
-    }
-    
+    /* Nettoyage */
+    .block-container { padding-top: 1rem !important; padding-bottom: 3rem !important; }
     #MainMenu, footer, header {visibility: hidden;}
-    
-    /* Titre Custom */
+
+    /* Header Pro */
     .pro-header {
         text-align: center;
-        margin-bottom: 10px;
-        border-bottom: 1px solid #333;
-        padding-bottom: 10px;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #E5E7EB;
     }
     .pro-title {
-        font-size: 24px;
-        font-weight: 700;
-        color: white;
+        font-size: 26px;
+        font-weight: 800;
+        color: #111827; /* Noir profond */
         margin: 0;
         font-family: sans-serif;
+        letter-spacing: -0.5px;
+    }
+    .pro-subtitle {
+        font-size: 14px;
+        color: #6B7280; /* Gris moyen */
+        margin-top: 5px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -113,9 +134,9 @@ elif "api_key" in st.session_state:
 
 # --- BARRE LATÉRALE ---
 with st.sidebar:
-    st.header("Paramètres")
+    st.header("⚙️ Paramètres")
     if api_key:
-        st.success("Système connecté")
+        st.success("✅ Système connecté")
     else:
         input_key = st.text_input("Clé API", type="password")
         if input_key:
@@ -131,30 +152,30 @@ def analyser_contenu(content, niveau):
         model = genai.GenerativeModel('gemini-2.5-flash')
         
         prompt = f"""
-        Agis en tant qu'expert juridique. Niveau : {niveau}.
-        Analyse ce document :
-        1. IDENTIFICATION (Qui ? Quoi ? Date ?)
-        2. FINANCES (Montant dû ? Échéance ? -> EN GRAS)
-        3. ACTIONS (Liste à puces des tâches)
-        4. PIÈGES (Conditions cachées ?)
-        Style : Direct et Pro.
+        Rôle : Expert administratif. Niveau : {niveau}.
+        Langue : Français.
+        
+        Analyse le document :
+        1. 📄 DOCUMENT (Nature, Date, Émetteur)
+        2. 💰 PAIEMENT (Montant et Date limite -> EN GRAS. Sinon "Aucun")
+        3. ✅ À FAIRE (Liste d'actions claires)
+        4. ⚠️ ATTENTION (Conditions pièges)
         """
         
         response = model.generate_content([prompt, content])
         return response.text
     except Exception as e:
-        return f"Erreur système : {str(e)}"
+        return f"Erreur : {str(e)}"
 
 # --- INTERFACE ---
 st.markdown("""
 <div class="pro-header">
-    <h1 class="pro-title">SIMPLIFI TOUT</h1>
+    <h1 class="pro-title">Simplifi Tout</h1>
+    <p class="pro-subtitle">L'administratif devient facile</p>
 </div>
 """, unsafe_allow_html=True)
 
-# Note pour la caméra arrière
-st.info("💡 Astuce : Si la caméra est inversée, changez-la via le menu 'Select Device' qui apparaît sur la caméra.", icon="🔄")
-
+# Menu Source
 source_image = st.radio(
     "Source :",
     ["Caméra", "Galerie", "Texte"],
@@ -168,20 +189,19 @@ entree = None
 type_entree = None
 
 if source_image == "Caméra":
-    # On force le label collapsed pour gagner de la place
-    entree = st.camera_input("Prendre la photo", label_visibility="collapsed")
+    entree = st.camera_input("Photo", label_visibility="collapsed")
     type_entree = "img"
 elif source_image == "Galerie":
-    entree = st.file_uploader("Importer", type=['png', 'jpg', 'pdf'])
+    entree = st.file_uploader("Fichier", type=['png', 'jpg', 'pdf'])
     type_entree = "img"
 else:
-    entree = st.text_area("Texte", height=150)
+    entree = st.text_area("Collez votre texte ici", height=150)
     type_entree = "txt"
 
 if entree:
     st.markdown("###")
     niveau_simplification = st.select_slider(
-        "Niveau d'analyse",
+        "Niveau de détail",
         options=["Synthèse", "Standard", "Détaillé"],
     )
     
@@ -196,8 +216,9 @@ if entree:
                 res = analyser_contenu(entree, niveau_simplification)
             
             st.markdown("---")
+            # Résultat sur fond Blanc avec bordure bleue (Style Papier)
             st.markdown(f"""
-            <div style="background-color: #1E1E1E; padding: 20px; border-radius: 8px; border-left: 4px solid #2563EB; color: #E0E0E0;">
+            <div style="background-color: #FFFFFF; padding: 25px; border-radius: 12px; border: 1px solid #E5E7EB; box-shadow: 0 4px 6px rgba(0,0,0,0.05); color: #374151;">
                 {res}
             </div>
             """, unsafe_allow_html=True)
