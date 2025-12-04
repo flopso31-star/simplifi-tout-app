@@ -5,84 +5,95 @@ from PIL import Image
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(
     page_title="Simplifi Tout",
-    page_icon="✨",
+    page_icon="📄", # Fini les étoiles, place au dossier
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# --- LE DESIGN (CSS AVANCÉ & CORRECTIFS) ---
+# --- LE DESIGN "CORPORATE" (CSS) ---
 st.markdown("""
     <style>
-    /* Fond d'écran global */
-    .stApp {
-        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-        color: white;
+    /* 1. SUPPRESSION DES MARGES DU HAUT (Logo trop bas) */
+    .block-container {
+        padding-top: 1rem !important; /* On remonte tout vers le haut */
+        padding-bottom: 1rem !important;
     }
 
-    /* =========================================
-       CSS SPÉCIAL CAMÉRA GRAND ANGLE
-    ========================================= */
-    /* On cible le conteneur de la caméra */
-    [data-testid="stCameraInput"] {
-        width: 100%;
+    /* 2. FOND D'ÉCRAN PRO (Gris Anthracite / Bleu Nuit) */
+    .stApp {
+        background-color: #0E1117;
+        color: #FAFAFA;
     }
+
+    /* 3. CSS SPÉCIAL CAMÉRA (Grand format) */
+    [data-testid="stCameraInput"] { width: 100%; }
     
-    /* On cible la VIDÉO */
     [data-testid="stCameraInput"] video {
-        height: 55vh !important; 
+        height: 50vh !important; 
         object-fit: cover !important;
-        border-radius: 20px !important;
-        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px !important;
+        border: 1px solid #333;
     }
     
-    /* On cible le bouton "Prendre la photo" pour qu'il soit VISIBLE */
+    /* Bouton Photo : Sobre et Visible */
     [data-testid="stCameraInput"] button {
        color: white !important;
-       background: linear-gradient(45deg, #FF416C, #FF4B2B) !important;
+       background-color: #2563EB !important; /* Bleu "Tech" */
        border: none !important;
-       border-radius: 25px !important;
-       padding: 15px 30px !important;
-       font-weight: bold !important;
-       margin-top: 15px !important;
+       border-radius: 8px !important; /* Coins moins ronds, plus carrés */
+       padding: 12px 25px !important;
+       font-weight: 600 !important;
+       margin-top: 10px !important;
        text-transform: uppercase;
-       box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important;
     }
-    /* ========================================= */
 
-
-    /* Styles des autres Boutons */
+    /* 4. BOUTON PRINCIPAL (ANALYSE) */
     .stButton>button {
-        background: linear-gradient(45deg, #FF416C, #FF4B2B);
+        background-color: #2563EB;
         color: white !important;
         border: none;
-        border-radius: 25px;
-        padding: 15px 30px;
-        font-size: 18px;
-        font-weight: bold;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        transition: all 0.3s ease;
+        border-radius: 8px; /* Look plus sérieux */
+        padding: 15px 0px;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
         width: 100%;
+        transition: background-color 0.2s;
     }
     .stButton>button:hover {
-        transform: scale(1.02);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        background-color: #1D4ED8; /* Bleu plus foncé au survol */
     }
 
-    /* Inputs transparents */
+    /* 5. Inputs et Cadres */
     .stTextInput>div>div, .stTextArea>div>div, .stSelectbox>div>div {
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: #262730;
         color: white;
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        border: 1px solid #41424C;
     }
     
     /* Nettoyage interface */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    #MainMenu, footer, header {visibility: hidden;}
     
-    /* Typographie */
-    h1, h2, h3 { text-align: center; font-family: 'Helvetica Neue', sans-serif; }
+    /* Titre Custom */
+    .pro-header {
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #333;
+    }
+    .pro-title {
+        font-size: 26px;
+        font-weight: 700;
+        color: white;
+        margin: 0;
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    .pro-subtitle {
+        font-size: 14px;
+        color: #A0A0A0;
+        margin-top: 5px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -95,64 +106,62 @@ elif "api_key" in st.session_state:
 
 # --- BARRE LATÉRALE ---
 with st.sidebar:
-    st.header("⚙️ Réglages techniques")
+    st.header("Paramètres")
     if api_key:
-        st.success("✅ Clé API connectée")
+        st.success("Système connecté")
     else:
         input_key = st.text_input("Clé API", type="password")
         if input_key:
             st.session_state.api_key = input_key
             st.rerun()
 
-# --- FONCTION IA (CERVEAU EXPERT) ---
+# --- FONCTION IA (PROMPT STRICT) ---
 def analyser_contenu(content, niveau):
     if not api_key:
-        return "⛔ Oups ! La clé API est manquante."
+        return "⛔ Erreur : Clé API manquante."
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.5-flash')
         
-        # LE NOUVEAU PROMPT PRO
         prompt = f"""
-        Tu es un expert en synthèse administrative et juridique. Niveau de détail demandé : {niveau}.
+        Agis en tant qu'expert juridique et administratif. Niveau d'analyse : {niveau}.
         
-        Ta mission est d'analyser ce document et de produire un rapport structuré :
+        Analyse le document fourni et produis une synthèse formelle :
         
-        1. 📄 IDENTIFICATION
-           - Qui est l'émetteur ?
-           - Quelle est la date du document ?
-           - De quoi ça parle (résumé en 1 phrase simple) ?
+        1. IDENTIFICATION DU DOCUMENT
+           - Émetteur / Destinataire
+           - Date et Objet
+           
+        2. SYNTHÈSE FINANCIÈRE (CRITIQUE)
+           - Y a-t-il un montant dû ? Si OUI : Affiche le MONTANT et l'ÉCHÉANCE en GRAS.
+           - Si NON : Indique "Aucune action financière requise".
 
-        2. 💰 ANALYSE FINANCIÈRE
-           - Y a-t-il un montant à payer ou à recevoir ? 
-           - Si OUI : Écris le MONTANT et la DATE LIMITE en GRAS.
-           - Si NON : Écris "Aucun mouvement financier".
+        3. ACTIONS À ENTREPRENDRE
+           - Liste numérotée des démarches à effectuer.
+           
+        4. POINTS DE VIGILANCE
+           - Clauses particulières, pénalités ou délais stricts.
 
-        3. ✅ ACTIONS REQUISES
-           - Liste les actions concrètes à effectuer (To-Do List).
-           - Si aucune action : précise "Document à classer".
-
-        4. ⚠️ VIGILANCE (PIÈGES)
-           - Signale s'il y a des pénalités, des renouvellements automatiques ou des conditions en petits caractères.
-
-        Ton ton doit être professionnel, rassurant et synthétique.
+        Ton style doit être direct, neutre et professionnel. Pas de familiarités.
         """
         
         response = model.generate_content([prompt, content])
         return response.text
     except Exception as e:
-        return f"Erreur technique : {str(e)}"
+        return f"Erreur système : {str(e)}"
 
-# --- INTERFACE PRINCIPALE ---
-st.title("✨ Simplifi Tout")
-st.caption("Votre Expert Administratif de Poche")
-
-st.markdown("###") 
+# --- INTERFACE PRINCIPALE (HEADER CUSTOM) ---
+st.markdown("""
+<div class="pro-header">
+    <h1 class="pro-title">SIMPLIFI TOUT</h1>
+    <p class="pro-subtitle">Analyseur de documents administratifs</p>
+</div>
+""", unsafe_allow_html=True)
 
 # 1. CHOIX DE LA SOURCE
 source_image = st.radio(
-    "Action :",
-    ["📸 Caméra", "🖼️ Galerie", "✍️ Texte"],
+    "Source :",
+    ["Caméra", "Galerie", "Texte"], # Texte simple, sans émojis
     horizontal=True,
     label_visibility="collapsed"
 )
@@ -163,30 +172,31 @@ entree = None
 type_entree = None
 
 # 2. AFFICHAGE DE L'INPUT
-if source_image == "📸 Caméra":
+if source_image == "Caméra":
     entree = st.camera_input("Prendre la photo", label_visibility="collapsed")
     type_entree = "img"
-elif source_image == "🖼️ Galerie":
-    entree = st.file_uploader("Fichier", type=['png', 'jpg'])
+elif source_image == "Galerie":
+    entree = st.file_uploader("Importer un fichier", type=['png', 'jpg', 'pdf'])
     type_entree = "img"
 else:
-    entree = st.text_area("Copier-coller le texte", height=150)
+    entree = st.text_area("Saisir le texte", height=150)
     type_entree = "txt"
 
 # 3. LE BLOC D'ACTION
 if entree:
     st.markdown("###")
-    st.markdown("##### 🎚️ Niveau d'expertise")
+    # Slider plus discret
     niveau_simplification = st.select_slider(
-        "Niveau de détail",
-        options=["Synthèse Rapide", "Normal", "Analyse Détaillée"],
-        label_visibility="collapsed"
+        "Profondeur d'analyse",
+        options=["Synthèse", "Standard", "Détaillé"],
+        label_visibility="visible" 
     )
     
     st.markdown("###")
     
-    if st.button("✨ LANCER L'ANALYSE ✨"):
-        with st.spinner("🧐 L'expert analyse votre document..."):
+    # Bouton sobre
+    if st.button("LANCER L'ANALYSE"):
+        with st.spinner("Traitement en cours..."):
             if type_entree == "img":
                 img = Image.open(entree)
                 res = analyser_contenu(img, niveau_simplification)
@@ -194,9 +204,9 @@ if entree:
                 res = analyser_contenu(entree, niveau_simplification)
             
             st.markdown("---")
-            # Affichage du résultat dans une boîte stylisée
+            # Résultat sobre (Gris foncé sur fond noir)
             st.markdown(f"""
-            <div style="background-color: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; border-left: 5px solid #FF4B2B;">
+            <div style="background-color: #1E1E1E; padding: 20px; border-radius: 8px; border-left: 4px solid #2563EB; color: #E0E0E0;">
                 {res}
             </div>
             """, unsafe_allow_html=True)
