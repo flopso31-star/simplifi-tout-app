@@ -11,7 +11,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. DESIGN & LOGO (CSS SÉCURISÉ) ---
+# --- 2. DESIGN & LOGO (CSS SÉCURISÉ ET NETTOYÉ) ---
 st.markdown("""
     <style>
     /* POLICE MODERNE */
@@ -31,37 +31,56 @@ st.markdown("""
     .app-title { font-size: 24px; font-weight: 800; color: #111; margin: 0; }
     .app-subtitle { font-size: 14px; color: #666; margin-top: 5px; text-align: center; }
 
-    /* --- BOUTON UPLOAD (CORRECTION) --- */
+    /* --- BOUTON UPLOAD (NETTOYAGE COMPLET) --- */
     
-    /* On cible la zone de dépôt (le rectangle en pointillés) */
+    /* Cible le conteneur principal */
+    [data-testid="stFileUploader"] {
+        width: 100% !important;
+    }
+
+    /* Style la zone cliquable */
     [data-testid="stFileUploader"] section {
         background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%) !important;
-        padding: 30px 0px !important; /* Donne de la hauteur */
+        padding: 30px 0px !important;
         border-radius: 20px !important;
         border: none !important;
         cursor: pointer !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    /* On change la couleur des textes à l'intérieur pour qu'ils soient lisibles sur le fond bleu */
-    [data-testid="stFileUploader"] section span {
-        color: white !important;
-        font-weight: bold !important;
-        font-size: 16px !important;
+    /* --- LA PARTIE CRUCIALE : CACHER LE TEXTE PAR DÉFAUT --- */
+    
+    /* Cache le texte "Drag and drop file here" */
+    [data-testid="stFileUploader"] section > div > span {
+        display: none !important;
     }
     
-    [data-testid="stFileUploader"] section small {
-        color: rgba(255,255,255,0.8) !important;
-        font-size: 12px !important;
-    }
-    
-    /* On cache le bouton "Browse files" standard car on rend toute la zone cliquable */
-    [data-testid="stFileUploader"] button {
+    /* Cache le texte "Limit 200MB..." */
+    [data-testid="stFileUploader"] section > div > small {
         display: none !important;
     }
 
-    /* Icône de trombone qu'on remplace ou cache si besoin */
+    /* Cache le bouton "Browse files" original */
+    [data-testid="stFileUploader"] button {
+        display: none !important;
+    }
+    
+    /* Cache l'icône de trombone standard */
     [data-testid="stFileUploader"] svg {
-        fill: white !important;
+        display: none !important;
+    }
+
+    /* --- AJOUT DU NOUVEAU TEXTE --- */
+
+    /* Utilise un pseudo-élément pour afficher le nouveau texte propre */
+    [data-testid="stFileUploader"] section::after {
+        content: "📸 PRENDRE UNE PHOTO / CHOISIR UN FICHIER";
+        color: white !important;
+        font-weight: 700 !important;
+        font-size: 16px !important;
+        display: block !important;
     }
 
     /* CACHER ÉLÉMENTS DE STREAMLIT */
@@ -116,18 +135,19 @@ def analyser(img_bytes):
     except Exception as e: return f"Erreur : {e}"
 
 # --- 5. INTERFACE ---
-logo_url = "https://cdn-icons-png.flaticon.com/512/9985/9985702.png"
+# Utilisation d'une icône plus "pro"
+logo_url = "https://cdn-icons-png.flaticon.com/512/10276/10276463.png"
 
 st.markdown(f"""
 <div class="header-container">
     <img src="{logo_url}" class="logo-img">
     <h1 class="app-title">Simplifi Tout</h1>
-    <p class="app-subtitle">Touchez la zone bleue ci-dessous</p>
+    <p class="app-subtitle">L'assistant qui lit vos papiers</p>
 </div>
 """, unsafe_allow_html=True)
 
-# BOUTON D'ACTION (Avec un label visible cette fois pour la sécurité)
-uploaded_file = st.file_uploader("Prendre une photo ou choisir un fichier", type=['png', 'jpg', 'jpeg'])
+# BOUTON D'ACTION (Le label est caché par le CSS)
+uploaded_file = st.file_uploader(" ", type=['png', 'jpg', 'jpeg'])
 
 # LOGIQUE AUTOMATIQUE
 if uploaded_file is not None:
