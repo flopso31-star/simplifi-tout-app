@@ -118,7 +118,7 @@ def analyser(contenu):
         
         1. 📄 C'EST QUOI ? (En 1 phrase simple : Qui écrit et pourquoi ?)
         2. 💰 ARGENT (Y a-t-il quelque chose à payer ? Si OUI : Affiche le MONTANT et la DATE LIMITE en TRÈS GRAS et GROS. Si NON : Écris "Rien à payer ✅")
-        3. ✅ À FAIRE (Liste ultra-courte des actions. Si rien à faire, dis "Tu peux classer ce document 📂")
+        3. ✅ À FAIRE (Liste les actions. Si rien à faire, dis "Tu peux classer ce document 📂")
         4. ⚠️ ATTENTION (S'il y a un piège ou une pénalité, dis-le clairement. Sinon n'écris rien.)
         
         Ton ton doit être clair, rassurant et direct.
@@ -188,3 +188,4 @@ if entree:
                 
                 # Petit message de succès pour confirmer que ça a marché
                 st.balloons()
+
