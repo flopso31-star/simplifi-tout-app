@@ -1,7 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
 from PIL import Image
-import io
 
 # --- 1. CONFIGURATION ---
 st.set_page_config(
@@ -11,79 +10,75 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. DESIGN & LOGO (CSS SÉCURISÉ ET NETTOYÉ) ---
+# --- 2. CSS "FANTÔME" (La solution radicale) ---
 st.markdown("""
     <style>
-    /* POLICE MODERNE */
+    /* POLICE & FOND */
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
     html, body, [class*="css"] { font-family: 'Poppins', sans-serif; }
-    
     .stApp { background-color: #F3F4F6; color: #1F2937; }
     .block-container { padding-top: 2rem !important; padding-bottom: 5rem !important; }
 
     /* HEADER */
     .header-container {
-        display: flex; flex-direction: column; align-items: center;
-        margin-bottom: 20px; background: white; padding: 20px;
-        border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;
+        background: white; padding: 20px; border-radius: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
     .logo-img { width: 80px; height: 80px; margin-bottom: 10px; }
     .app-title { font-size: 24px; font-weight: 800; color: #111; margin: 0; }
     .app-subtitle { font-size: 14px; color: #666; margin-top: 5px; text-align: center; }
 
-    /* --- BOUTON UPLOAD (NETTOYAGE COMPLET) --- */
-    
-    /* Cible le conteneur principal */
-    [data-testid="stFileUploader"] {
-        width: 100% !important;
-    }
+    /* --- LE HACK SUPRÊME POUR LE BOUTON --- */
 
-    /* Style la zone cliquable */
+    /* 1. On cible la zone de dépôt principale */
     [data-testid="stFileUploader"] section {
         background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%) !important;
-        padding: 30px 0px !important;
         border-radius: 20px !important;
         border: none !important;
+        padding: 40px 0px !important; /* Donne la hauteur au bouton */
         cursor: pointer !important;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        
+        /* ICI LA MAGIE : On rend tout le texte natif INVISIBLE */
+        color: transparent !important;
+        font-size: 0px !important;
     }
 
-    /* --- LA PARTIE CRUCIALE : CACHER LE TEXTE PAR DÉFAUT --- */
-    
-    /* Cache le texte "Drag and drop file here" */
-    [data-testid="stFileUploader"] section > div > span {
-        display: none !important;
+    /* 2. On cible TOUS les enfants possibles (span, small, div, svg) et on les force à être invisibles */
+    [data-testid="stFileUploader"] section * {
+        color: transparent !important;
+        font-size: 0px !important;
+        fill: transparent !important; /* Pour les icônes SVG */
+        border: none !important;
+        background-color: transparent !important;
     }
     
-    /* Cache le texte "Limit 200MB..." */
-    [data-testid="stFileUploader"] section > div > small {
-        display: none !important;
-    }
-
-    /* Cache le bouton "Browse files" original */
+    /* 3. On cache spécifiquement le bouton "Browse files" par sécurité */
     [data-testid="stFileUploader"] button {
         display: none !important;
     }
-    
-    /* Cache l'icône de trombone standard */
-    [data-testid="stFileUploader"] svg {
-        display: none !important;
-    }
 
-    /* --- AJOUT DU NOUVEAU TEXTE --- */
-
-    /* Utilise un pseudo-élément pour afficher le nouveau texte propre */
+    /* 4. ON ÉCRIT NOTRE PROPRE TEXTE PAR DESSUS */
+    /* On utilise ::after sur la section elle-même */
     [data-testid="stFileUploader"] section::after {
-        content: "📸 PRENDRE UNE PHOTO / CHOISIR UN FICHIER";
+        content: "📸 PRENDRE UNE PHOTO / GALERIE";
+        
+        /* On remet la couleur et la taille visible */
         color: white !important;
+        font-size: 18px !important;
         font-weight: 700 !important;
-        font-size: 16px !important;
-        display: block !important;
+        
+        /* On centre parfaitement le texte */
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        white-space: nowrap; /* Empêche le texte de se couper */
+        pointer-events: none; /* Le clic passe au travers pour activer l'upload */
     }
 
-    /* CACHER ÉLÉMENTS DE STREAMLIT */
+    /* Cacher éléments parasites */
+    [data-testid="stFileUploader"] ul { display: none !important; }
     header, footer, #MainMenu { visibility: hidden !important; }
     </style>
 """, unsafe_allow_html=True)
@@ -135,19 +130,18 @@ def analyser(img_bytes):
     except Exception as e: return f"Erreur : {e}"
 
 # --- 5. INTERFACE ---
-# Utilisation d'une icône plus "pro"
-logo_url = "https://cdn-icons-png.flaticon.com/512/10276/10276463.png"
+logo_url = "https://cdn-icons-png.flaticon.com/512/9985/9985702.png"
 
 st.markdown(f"""
 <div class="header-container">
     <img src="{logo_url}" class="logo-img">
     <h1 class="app-title">Simplifi Tout</h1>
-    <p class="app-subtitle">L'assistant qui lit vos papiers</p>
+    <p class="app-subtitle">Touchez le bouton violet ci-dessous</p>
 </div>
 """, unsafe_allow_html=True)
 
-# BOUTON D'ACTION (Le label est caché par le CSS)
-uploaded_file = st.file_uploader(" ", type=['png', 'jpg', 'jpeg'])
+# BOUTON D'ACTION (Label vide)
+uploaded_file = st.file_uploader(" ", type=['png', 'jpg', 'jpeg'], label_visibility="hidden")
 
 # LOGIQUE AUTOMATIQUE
 if uploaded_file is not None:
@@ -178,3 +172,4 @@ if uploaded_file is not None:
     except Exception as e:
         status.update(label="❌ Erreur", state="error")
         st.error(f"Erreur : {e}")
+    
