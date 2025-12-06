@@ -5,84 +5,81 @@ from PIL import Image
 # --- 1. CONFIGURATION ---
 st.set_page_config(
     page_title="Simplifi Tout",
-    page_icon="⚡",
+    page_icon="📄",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. CSS "SPEED PRO" ---
+# --- 2. STYLE PRO & NETTOYAGE ---
 st.markdown("""
     <style>
-    /* IMPORT POLICE */
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+    /* POLICE & FOND */
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
     html, body, [class*="css"] { font-family: 'Poppins', sans-serif; }
+    .stApp { background-color: #F8F9FA; color: #333; }
     
-    .stApp { background-color: #F3F4F6; color: #1F2937; }
-    .block-container { padding-top: 1.5rem !important; padding-bottom: 5rem !important; }
+    /* SUPPRESSION MARGES */
+    .block-container { padding-top: 1rem !important; padding-bottom: 5rem !important; }
+    header, footer, #MainMenu { display: none !important; }
 
-    /* HEADER */
-    .header-container {
-        display: flex; flex-direction: column; align-items: center;
-        margin-bottom: 20px; background: white; padding: 20px;
-        border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    /* HEADER PERSONNALISÉ */
+    .header-box {
+        text-align: center;
+        padding: 20px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
     }
-    .logo-img { width: 70px; height: 70px; margin-bottom: 10px; }
-    .app-title { font-size: 22px; font-weight: 800; color: #111; margin: 0; }
-    
-    /* --- CUSTOMISATION DE LA CAMÉRA LIVE (INSTANTANÉE) --- */
-    
-    /* 1. Le Conteneur Vidéo */
-    [data-testid="stCameraInput"] video {
-        width: 100% !important;
-        height: 60vh !important; /* On force une grande hauteur */
-        object-fit: cover !important;
-        border-radius: 20px !important;
-        border: 4px solid white;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        margin-bottom: 20px !important; /* Espace avant le bouton */
-    }
+    .logo-icon { width: 60px; margin-bottom: 10px; }
+    .main-title { font-size: 24px; font-weight: 800; color: #111; margin: 0; }
+    .sub-title { font-size: 14px; color: #666; margin-top: 5px; }
 
-    /* 2. Le Bouton Déclencheur */
-    [data-testid="stCameraInput"] button {
-        visibility: visible !important;
-        background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%) !important;
-        color: white !important;
+    /* CUSTOMISATION DU BOUTON UPLOAD */
+    [data-testid="stFileUploader"] { width: 100% !important; }
+    
+    /* On transforme la zone de dépôt en un beau bouton */
+    [data-testid="stFileUploader"] section {
+        background: linear-gradient(135deg, #2563EB 0%, #10B981 100%) !important;
+        padding: 0px !important;
+        border-radius: 15px !important;
         border: none !important;
-        border-radius: 50px !important; /* Bouton Pilule */
-        width: 100% !important;
-        height: 70px !important;
-        font-size: 0px !important; /* Cache le texte anglais */
+        min-height: 70px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3) !important;
+        cursor: pointer !important;
     }
     
-    /* 3. Texte Français sur le bouton */
-    [data-testid="stCameraInput"] button::after {
-        content: "⚡ PRENDRE LA PHOTO";
-        font-size: 18px !important;
-        font-weight: 800 !important;
+    /* On cache TOUT le texte par défaut (Drag&Drop etc) */
+    [data-testid="stFileUploader"] section > div, 
+    [data-testid="stFileUploader"] section span, 
+    [data-testid="stFileUploader"] section small {
+        display: none !important;
+    }
+
+    /* On ajoute NOTRE texte par dessus */
+    [data-testid="stFileUploader"] section::after {
+        content: "📸 PHOTO  ou  📂 DOCUMENT";
         color: white !important;
-        letter-spacing: 1px;
+        font-weight: 700 !important;
+        font-size: 16px !important;
     }
+    
+    /* On cache la liste de fichiers une fois uploadé */
+    [data-testid="stFileUploader"] ul { display: none !important; }
 
-    /* 4. Le Sélecteur de Caméra (Switch) */
-    [data-testid="stCameraInput"] small {
-        display: block !important;
-        visibility: visible !important;
-        background: white !important;
-        color: #4F46E5 !important;
-        padding: 8px 15px !important;
-        border-radius: 12px !important;
-        font-weight: bold !important;
-        text-align: center !important;
-        border: 1px solid #E5E7EB !important;
-        margin-bottom: 10px !important;
+    /* BOITE DE RÉSULTAT */
+    .result-box {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        border-left: 5px solid #2563EB;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        margin-top: 20px;
+        animation: fadeIn 0.5s ease-out;
     }
-
-    /* CACHER ÉLÉMENTS INUTILES */
-    header, footer, #MainMenu { visibility: hidden !important; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 """, unsafe_allow_html=True)
 
@@ -98,62 +95,82 @@ with st.sidebar:
         k = st.text_input("Clé API", type="password")
         if k: st.session_state.api_key = k; st.rerun()
 
-# --- 4. CERVEAU IA ---
-def analyser(img_bytes):
+# --- 4. FONCTIONS (Compression + IA) ---
+def compresser_image(image):
+    # Réduit la taille pour que ça aille vite en 4G
+    if image.mode != 'RGB': image = image.convert('RGB')
+    max_size = 1500
+    if max(image.size) > max_size:
+        ratio = max_size / max(image.size)
+        new_size = (int(image.size[0] * ratio), int(image.size[1] * ratio))
+        image = image.resize(new_size, Image.Resampling.LANCZOS)
+    return image
+
+def analyser(img):
     if not api_key: return "⚠️ Clé API manquante."
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.5-flash')
         prompt = """
-        Tu es un assistant personnel. Analyse ce document.
-        Sois DIRECT.
+        Agis comme une secrétaire personnelle efficace.
+        Analyse ce document pour un particulier. Sois DIRECTE.
         
-        ### 📄 C'EST QUOI ?
-        (Type de courrier, Émetteur)
-        
-        ### 💰 FAUT-IL PAYER ?
-        (Si OUI : Affiche le MONTANT et la DATE LIMITE en GRAS. Si NON : Écris "Rien à payer ✅")
-        
-        ### ✅ QUE DOIS-JE FAIRE ?
-        (Liste des actions)
-        
-        ### ⚠️ ATTENTION
-        (Pièges éventuels)
+        1. 📄 C'EST QUOI ? (Nature du document, Émetteur)
+        2. 💰 ARGENT (Y a-t-il un paiement ? SI OUI : Montant + Date en GRAS. SI NON : "Rien à payer ✅")
+        3. ✅ À FAIRE (Liste d'actions très courtes)
+        4. ⚠️ ATTENTION (Seulement s'il y a un piège/pénalité)
         """
-        return model.generate_content([prompt, img_bytes]).text
+        return model.generate_content([prompt, img]).text
     except Exception as e: return f"Erreur : {e}"
 
 # --- 5. INTERFACE ---
-logo_url = "https://cdn-icons-png.flaticon.com/512/9985/9985702.png"
+
+# A. LE HEADER (Logo + Titre + Description)
+# Icône Document Pro
+icon_url = "https://cdn-icons-png.flaticon.com/512/2991/2991106.png"
 
 st.markdown(f"""
-<div class="header-container">
-    <img src="{logo_url}" class="logo-img">
-    <h1 class="app-title">Simplifi Tout</h1>
+<div class="header-box">
+    <img src="{icon_url}" class="logo-icon">
+    <h1 class="main-title">Simplifi Tout</h1>
+    <p class="sub-title">Scannez vos courriers, comprenez tout de suite.</p>
 </div>
 """, unsafe_allow_html=True)
 
-# NOTE D'AIDE
-st.caption("ℹ️ Pour la caméra arrière, touchez **'Select Device'** juste au-dessus de l'image.")
+# B. ZONE DE RÉSULTAT (L'ASCENSEUR MAGIQUE)
+# On crée un espace vide ICI, tout en haut. L'IA écrira dedans plus tard.
+zone_resultat = st.empty()
 
-# CAMÉRA LIVE (Le secret de la vitesse)
-photo_prise = st.camera_input(" ", label_visibility="hidden")
+# C. LE BOUTON D'ACTION
+uploaded_file = st.file_uploader(" ", type=['png', 'jpg', 'jpeg'], label_visibility="collapsed")
 
-# AUTOMATISME
-if photo_prise:
-    # Pas de spinner bloquant, ça va trop vite pour ça
+# D. LOGIQUE AUTOMATIQUE
+if uploaded_file is not None:
+    # Petit message de chargement non intrusif
+    toast = st.toast("📸 Image reçue ! Analyse en cours...", icon="🚀")
     
-    # 1. Analyse directe
-    res = analyser(photo_prise)
-    
-    # 2. Résultat
-    st.markdown("---")
-    st.markdown(f"""
-    <div style="
-        background: white; padding: 25px; border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid #E5E7EB; margin-top: 10px;
-        animation: fadeIn 0.5s;
-    ">
-        {res}
-    </div>
-    """, unsafe_allow_html=True)
+    try:
+        # 1. Traitement Image
+        img = Image.open(uploaded_file)
+        img_opt = compresser_image(img) # On compresse pour la vitesse
+        
+        # 2. IA
+        reponse = analyser(img_opt)
+        
+        # 3. AFFICHAGE DANS LA ZONE DU HAUT
+        with zone_resultat.container():
+            st.markdown(f"""
+            <div class="result-box">
+                <h3 style="color:#2563EB; margin-top:0;">💡 Analyse Terminée</h3>
+                <hr style="border:1px solid #EEE;">
+                {reponse}
+            </div>
+            """, unsafe_allow_html=True)
+            st.balloons()
+            
+    except Exception as e:
+        st.error(f"Erreur : {e}")
+
+# E. EXPLICATION (En bas)
+if not uploaded_file:
+    st.info("👇 Cliquez sur le bouton ci-dessous pour choisir **Caméra** ou **Fichier**.", icon="ℹ️")
