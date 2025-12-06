@@ -10,72 +10,56 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. CSS "GROS BOUTON" ---
+# --- 2. CSS "INVISIBLE & AUTOMATIQUE" ---
 st.markdown("""
     <style>
     /* FOND */
     .stApp { background-color: #F8F9FA; color: #333; }
-    .block-container { padding-top: 0.5rem !important; padding-bottom: 5rem !important; }
+    .block-container { padding-top: 1rem !important; padding-bottom: 5rem !important; }
 
-    /* HEADER COMPACT */
-    .pro-header { text-align: center; margin-bottom: 10px; border-bottom: 1px solid #DDD; }
-    .pro-title { font-size: 22px; font-weight: 800; color: #111; margin: 0; font-family: sans-serif; }
+    /* HEADER */
+    .pro-header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #DDD; }
+    .pro-title { font-size: 26px; font-weight: 800; color: #111; margin: 0; font-family: sans-serif; }
 
-    /* TRANSFORMATION DU FILE UPLOADER EN BOUTON GÉANT */
+    /* --- LE GROS NETTOYAGE DU BOUTON UPLOAD --- */
+    
+    /* On cible le composant File Uploader */
     [data-testid="stFileUploader"] {
         width: 100% !important;
     }
     
-    [data-testid="stFileUploader"] section {
-        padding: 0 !important;
-        background-color: transparent !important;
-        border: none !important;
-    }
+    /* On cache TOUS les petits textes parasites (Limit, Drag&Drop...) */
+    [data-testid="stFileUploader"] section > div:first-child span { display: none !important; }
+    [data-testid="stFileUploader"] section > div:first-child small { display: none !important; }
+    [data-testid="stFileUploader"] section > div:first-child div { display: none !important; }
 
-    /* On cache le petit texte "Drag and drop" */
-    [data-testid="stFileUploader"] section > div:first-child {
-        display: none !important;
-    }
-
-    /* On style le bouton "Browse files" pour qu'il devienne le bouton principal */
+    /* On transforme le bouton "Browse files" en GROS BOUTON UNIQUE */
     [data-testid="stFileUploader"] button {
         background-color: #2563EB !important; /* Bleu Pro */
         color: white !important;
         border: none !important;
-        border-radius: 12px !important;
-        padding: 20px !important;
+        border-radius: 15px !important;
         width: 100% !important;
+        height: 70px !important; /* Hauteur confortable */
         font-size: 0 !important; /* On cache le texte anglais */
-        height: 80px !important; /* Bien haut pour être cliquable */
-        box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3) !important;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
-    /* On écrit le texte Français */
+    /* On écrit le texte Français par-dessus */
     [data-testid="stFileUploader"] button::after {
         content: "📸 PRENDRE UNE PHOTO (HD)";
         font-size: 18px !important;
         font-weight: bold !important;
         color: white !important;
-        display: block;
-        margin-top: -2px;
+        display: block !important;
     }
     
-    /* Le petit texte sous le bouton une fois la photo prise */
-    [data-testid="stFileUploader"] small {
+    /* Une fois le fichier chargé, on cache la liste moche du fichier */
+    [data-testid="stFileUploader"] ul {
         display: none !important;
-    }
-
-    /* BOUTON ANALYSE (VERT) */
-    .stButton>button {
-        background-color: #10B981; 
-        color: white !important;
-        height: 60px;
-        font-size: 20px;
-        border-radius: 12px;
-        border: none;
-        width: 100%;
-        font-weight: bold;
-        margin-top: 10px;
     }
 
     /* CACHER ÉLÉMENTS INUTILES */
@@ -99,71 +83,65 @@ with st.sidebar:
             st.session_state.api_key = k
             st.rerun()
 
-# --- 4. CERVEAU IA (MODE PRÉCIS) ---
+# --- 4. CERVEAU IA (RAPIDE ET EFFICACE) ---
 def analyser(contenu):
-    if not api_key: return "⛔ Clé manquante."
+    if not api_key: return "⛔ Problème de clé API."
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.5-flash')
-        config = genai.types.GenerationConfig(temperature=0.1) # Précision max
         
         prompt = f"""
-        ANALYSE DE DOCUMENT (HAUTE RÉSOLUTION).
+        Tu es un assistant personnel. Analyse ce document pour un particulier.
         
-        1. 🏢 IDENTITÉ
-           - Cherche le NOM de l'entreprise/émetteur (Logo, en-tête).
-           - Type de document.
-
-        2. 💰 ARGENT
-           - Montant "Total TTC" / "Net à payer".
-           - MONTANT EXACT et DATE ÉCHÉANCE.
-           - Sinon: "Aucun montant réclamé".
-
-        3. ✅ ACTIONS
-           - Que doit faire l'utilisateur concrètement ?
-
-        4. ⚠️ ATTENTION
-           - Pénalités ou pièges ?
+        Réponds directement :
+        1. 📄 C'EST QUOI ? (Type de courrier, Émetteur)
+        2. 💰 ARGENT (Y a-t-il un montant à payer ? OUI/NON. Si OUI : Combien et Quand ?)
+        3. ✅ À FAIRE (Liste simple des actions)
+        4. ⚠️ ATTENTION (Seulement s'il y a un piège)
         """
-        return model.generate_content([prompt, contenu], generation_config=config).text
+        return model.generate_content([prompt, contenu]).text
     except Exception as e: return f"Erreur : {e}"
 
 # --- 5. INTERFACE ---
 st.markdown('<div class="pro-header"><h1 class="pro-title">Simplifi Tout</h1></div>', unsafe_allow_html=True)
 
-# ZONE RÉSULTAT EN HAUT
-resultat_container = st.container()
+st.info("💡 Cliquez ci-dessous puis choisissez **'Appareil photo'**.", icon="📸")
 
-# Note explicative
-st.caption("ℹ️ Cliquez ci-dessous puis choisissez **'Appareil photo'** ou **'Caméra'** sur votre mobile pour une qualité optimale.")
+# BOUTON UNIQUE (Le trigger)
+uploaded_file = st.file_uploader("Upload", type=['png', 'jpg', 'jpeg'], label_visibility="collapsed")
 
-# BOUTON UNIQUE (Fichier ou Caméra Natif)
-fichier = st.file_uploader("Upload", type=['png', 'jpg', 'jpeg'], label_visibility="collapsed")
-
-# Bloc d'action
-if fichier:
-    st.image(fichier, caption="Image capturée", use_container_width=True) # Affiche la photo pour vérif
+# --- LOGIQUE AUTOMATIQUE (Dès que la photo est là, on lance) ---
+if uploaded_file is not None:
     
-    if st.button("LANCER L'ANALYSE"):
-        with st.spinner("Lecture HD en cours..."):
-            
-            img = Image.open(fichier)
-            res = analyser(img)
-            
-            with resultat_container:
-                st.markdown(f"""
-                <div style="
-                    background-color: #FFFFFF; 
-                    padding: 20px; 
-                    border-radius: 15px; 
-                    border: 3px solid #2563EB; 
-                    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2); 
-                    color: #333;
-                    margin-bottom: 20px;
-                ">
-                    <h3 style="text-align:center; color:#2563EB; margin-top:0;">💡 RÉSULTAT</h3>
-                    <hr style="border:1px solid #EEE;">
-                    {res}
-                </div>
-                """, unsafe_allow_html=True)
-                st.balloons()
+    # 1. On affiche un message d'attente immédiatement
+    with st.spinner("🚀 Photo reçue ! Analyse intelligente en cours..."):
+        
+        # 2. On traite l'image
+        image = Image.open(uploaded_file)
+        
+        # 3. On appelle l'IA
+        resultat = analyser(image)
+        
+        # 4. On affiche le résultat TOUT EN HAUT (Ascenseur magique)
+        st.markdown("---")
+        st.markdown(f"""
+        <div style="
+            background-color: #FFFFFF; 
+            padding: 25px; 
+            border-radius: 15px; 
+            border: 3px solid #2563EB; 
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2); 
+            color: #333;
+            animation: fadeIn 0.5s;
+        ">
+            <h3 style="text-align:center; color:#2563EB; margin-top:0;">💡 RÉSULTAT</h3>
+            <hr style="border:1px solid #EEE;">
+            {resultat}
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # 5. On affiche l'image en petit en dessous pour rappel
+        with st.expander("Voir la photo envoyée"):
+            st.image(image, use_container_width=True)
+
+        st.balloons()
