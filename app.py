@@ -6,12 +6,12 @@ import io
 # --- 1. CONFIGURATION ---
 st.set_page_config(
     page_title="Simplifi Tout",
-    page_icon="⚡",
+    page_icon="✨",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. CSS & DESIGN PRO ---
+# --- 2. DESIGN PRO & CLEAN ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
@@ -72,42 +72,37 @@ with st.sidebar:
         k = st.text_input("Clé API", type="password")
         if k: st.session_state.api_key = k; st.rerun()
 
-# --- 4. FONCTION DE COMPRESSION (LE CŒUR DU TURBO) ---
+# --- 4. COMPRESSION (POUR LA VITESSE) ---
 def preparer_image(image_file):
-    """
-    Cette fonction prend l'image brute, la réduit en taille 
-    et la renvoie prête pour l'IA.
-    """
     image = Image.open(image_file)
-    
-    # 1. Conversion en RGB (pour éviter les soucis de PNG transparents)
-    if image.mode != 'RGB':
-        image = image.convert('RGB')
-    
-    # 2. Redimensionnement (Max 1000px de large)
-    # Un document A4 est lisible parfaitement à 1000px, pas besoin de 4000px.
+    if image.mode != 'RGB': image = image.convert('RGB')
     max_dimension = 1000
     if max(image.size) > max_dimension:
         ratio = max_dimension / max(image.size)
         new_size = (int(image.size[0] * ratio), int(image.size[1] * ratio))
         image = image.resize(new_size, Image.Resampling.LANCZOS)
-        
     return image
 
-# --- 5. CERVEAU IA ---
+# --- 5. CERVEAU IA (REMIS À ZÉRO SUR LA VERSION SIMPLE) ---
 def analyser(img_traitee):
     if not api_key: return "⚠️ Clé API manquante."
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.5-flash')
-        prompt = """
-        Agis comme un assistant personnel efficace.
-        Analyse ce document administratif. Sois DIRECT.
         
-        1. 📄 C'EST QUOI ? (Nature, Émetteur)
-        2. 💰 ARGENT (Montant & Date en GRAS. Si rien : "Rien à payer ✅")
-        3. ✅ À FAIRE (Liste d'actions ultra-courte)
-        4. ⚠️ ATTENTION (Pièges éventuels)
+        # ICI : J'ai remis exactement la version "Monsieur tout le monde"
+        prompt = """
+        Tu es un assistant personnel bienveillant.
+        Ta mission : Lire ce document et l'expliquer le plus simplement possible à quelqu'un qui déteste l'administratif.
+        
+        Réponds directement avec cette structure :
+        
+        1. 📄 C'EST QUOI ? (En 1 phrase simple : Qui écrit et pourquoi ?)
+        2. 💰 ARGENT (Y a-t-il quelque chose à payer ? Si OUI : Affiche le MONTANT et la DATE LIMITE en TRÈS GRAS et GROS. Si NON : Écris "Rien à payer ✅")
+        3. ✅ À FAIRE (Liste ultra-courte des actions. Si rien à faire, dis "Tu peux classer ce document 📂")
+        4. ⚠️ ATTENTION (S'il y a un piège ou une pénalité, dis-le clairement. Sinon n'écris rien.)
+        
+        Ton ton doit être clair, rassurant et direct.
         """
         return model.generate_content([prompt, img_traitee]).text
     except Exception as e: return f"Erreur : {e}"
@@ -119,36 +114,35 @@ st.markdown(f"""
 <div class="header-box">
     <img src="{icon_url}" class="logo-icon">
     <h1 class="main-title">Simplifi Tout</h1>
-    <p class="sub-title">L'assistant administratif rapide.</p>
+    <p class="sub-title">L'administratif devient facile.</p>
 </div>
 """, unsafe_allow_html=True)
 
-# ZONE RÉSULTAT (VIDE AU DÉBUT)
+# ZONE RÉSULTAT (VIDE AU DÉBUT, MAIS PLACÉE EN HAUT)
 zone_resultat = st.empty()
 
 # BOUTON
 uploaded_file = st.file_uploader(" ", type=['png', 'jpg', 'jpeg'], label_visibility="collapsed")
 
-# LOGIQUE AUTOMATIQUE
+# LOGIQUE
 if uploaded_file is not None:
     
-    # Notification visuelle immédiate
-    st.toast("⚡ Optimisation de l'image pour le réseau...", icon="⚙️")
+    st.toast("⚡ Traitement rapide...", icon="⚙️")
     
     try:
-        # 1. COMPRESSION IMMÉDIATE
-        with st.spinner("Traitement rapide..."):
-            image_optimisee = preparer_image(uploaded_file)
+        # 1. COMPRESSION
+        image_optimisee = preparer_image(uploaded_file)
         
         # 2. ENVOI À L'IA
-        with st.spinner("L'IA lit le document..."):
+        # J'ai remis le spinner simple
+        with st.spinner("Lecture du document..."):
             reponse = analyser(image_optimisee)
         
         # 3. AFFICHAGE RÉSULTAT EN HAUT
         with zone_resultat.container():
             st.markdown(f"""
             <div class="result-box">
-                <h3 style="color:#2563EB; margin-top:0;">💡 Analyse Terminée</h3>
+                <h3 style="color:#2563EB; margin-top:0;">💡 RÉSULTAT</h3>
                 <hr style="border:1px solid #EEE;">
                 {reponse}
             </div>
