@@ -2,72 +2,70 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# --- 1. CONFIGURATION ---
-st.set_page_config(
-    page_title="Simplifi Tout",
-    page_icon="📄",
-    layout="centered",
-    initial_sidebar_state="collapsed"
-)
+# --- CONFIG ---
+st.set_page_config(page_title="Simplifi Tout", page_icon="📄", layout="centered", initial_sidebar_state="collapsed")
 
-# --- 2. CSS "INVISIBLE & AUTOMATIQUE" ---
+# --- CSS BULLDOZER ---
 st.markdown("""
     <style>
-    /* FOND */
     .stApp { background-color: #F8F9FA; color: #333; }
-    .block-container { padding-top: 1rem !important; padding-bottom: 5rem !important; }
+    .block-container { padding-top: 1rem !important; }
 
-    /* HEADER */
-    .pro-header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #DDD; }
-    .pro-title { font-size: 26px; font-weight: 800; color: #111; margin: 0; font-family: sans-serif; }
+    /* CACHER LE HEADER ET FOOTER */
+    header, footer, #MainMenu { visibility: hidden !important; }
 
-    /* --- LE GROS NETTOYAGE DU BOUTON UPLOAD --- */
+    /* === LE GROS BOUTON PHOTO (NETTOYAGE COMPLET) === */
     
-    /* On cible le composant File Uploader */
-    [data-testid="stFileUploader"] {
-        width: 100% !important;
+    /* 1. On cible la zone de dépôt */
+    [data-testid="stFileUploader"] section {
+        padding: 0 !important;
+        background-color: transparent !important;
+        border: none !important;
     }
-    
-    /* On cache TOUS les petits textes parasites (Limit, Drag&Drop...) */
-    [data-testid="stFileUploader"] section > div:first-child span { display: none !important; }
-    [data-testid="stFileUploader"] section > div:first-child small { display: none !important; }
-    [data-testid="stFileUploader"] section > div:first-child div { display: none !important; }
 
-    /* On transforme le bouton "Browse files" en GROS BOUTON UNIQUE */
+    /* 2. ON REND TOUT LE TEXTE INVISIBLE DANS CETTE ZONE */
+    [data-testid="stFileUploader"] section > div, 
+    [data-testid="stFileUploader"] section span, 
+    [data-testid="stFileUploader"] section small {
+        color: transparent !important; /* Texte invisible */
+        font-size: 0px !important;     /* Taille zéro */
+    }
+
+    /* 3. ON NE GARDE QUE LE BOUTON ET ON LE CUSTOMISE */
     [data-testid="stFileUploader"] button {
-        background-color: #2563EB !important; /* Bleu Pro */
+        visibility: visible !important; /* Lui, on le voit */
+        background-color: #2563EB !important;
         color: white !important;
         border: none !important;
-        border-radius: 15px !important;
+        border-radius: 50px !important; /* Très rond */
         width: 100% !important;
-        height: 70px !important; /* Hauteur confortable */
-        font-size: 0 !important; /* On cache le texte anglais */
-        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3) !important;
+        height: 80px !important;
+        font-size: 0px !important; /* On cache le texte "Browse files" */
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        margin-top: -30px !important; /* Remonte pour couvrir le vide */
     }
 
-    /* On écrit le texte Français par-dessus */
+    /* 4. ON ÉCRIT LE NOUVEAU TEXTE PAR DESSUS */
     [data-testid="stFileUploader"] button::after {
         content: "📸 PRENDRE UNE PHOTO (HD)";
         font-size: 18px !important;
         font-weight: bold !important;
         color: white !important;
-        display: block !important;
+        visibility: visible !important;
     }
     
-    /* Une fois le fichier chargé, on cache la liste moche du fichier */
-    [data-testid="stFileUploader"] ul {
-        display: none !important;
-    }
-
-    /* CACHER ÉLÉMENTS INUTILES */
-    #MainMenu, footer, header {visibility: hidden;}
+    /* 5. Une fois le fichier chargé, on cache la liste moche */
+    [data-testid="stFileUploader"] ul { display: none !important; }
+    
+    /* HEADER TITRE */
+    .pro-header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #DDD; }
+    .pro-title { font-size: 26px; font-weight: 800; color: #111; margin: 0; font-family: sans-serif; }
     </style>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# --- 3. CLÉ API ---
+# --- CLÉ API ---
 api_key = None
 if "GOOGLE_API_KEY" in st.secrets:
     api_key = st.secrets["GOOGLE_API_KEY"]
@@ -75,73 +73,49 @@ elif "api_key" in st.session_state:
     api_key = st.session_state.api_key
 
 with st.sidebar:
-    st.header("⚙️ Paramètres")
-    if api_key: st.success("✅ Connecté")
-    else:
+    if not api_key:
         k = st.text_input("Clé API", type="password")
-        if k:
-            st.session_state.api_key = k
-            st.rerun()
+        if k: st.session_state.api_key = k; st.rerun()
 
-# --- 4. CERVEAU IA (RAPIDE ET EFFICACE) ---
-def analyser(contenu):
-    if not api_key: return "⛔ Problème de clé API."
+# --- IA ---
+def analyser(img):
+    if not api_key: return "⚠️ Clé API manquante."
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.5-flash')
-        
-        prompt = f"""
-        Tu es un assistant personnel. Analyse ce document pour un particulier.
-        
-        Réponds directement :
-        1. 📄 C'EST QUOI ? (Type de courrier, Émetteur)
-        2. 💰 ARGENT (Y a-t-il un montant à payer ? OUI/NON. Si OUI : Combien et Quand ?)
-        3. ✅ À FAIRE (Liste simple des actions)
-        4. ⚠️ ATTENTION (Seulement s'il y a un piège)
-        """
-        return model.generate_content([prompt, contenu]).text
+        prompt = """Assistant perso. Analyse pour un particulier :
+        1. 📄 C'EST QUOI ? (Type, Émetteur)
+        2. 💰 ARGENT (Montant & Date limite en GRAS. Sinon "Rien à payer")
+        3. ✅ À FAIRE (Liste actions simples)
+        4. ⚠️ ATTENTION (Pièges éventuels)"""
+        return model.generate_content([prompt, img]).text
     except Exception as e: return f"Erreur : {e}"
 
-# --- 5. INTERFACE ---
+# --- APP ---
 st.markdown('<div class="pro-header"><h1 class="pro-title">Simplifi Tout</h1></div>', unsafe_allow_html=True)
 
-st.info("💡 Cliquez ci-dessous puis choisissez **'Appareil photo'**.", icon="📸")
+# LE DÉCLENCHEUR
+uploaded_file = st.file_uploader(" ", type=['png', 'jpg', 'jpeg'], label_visibility="collapsed")
 
-# BOUTON UNIQUE (Le trigger)
-uploaded_file = st.file_uploader("Upload", type=['png', 'jpg', 'jpeg'], label_visibility="collapsed")
-
-# --- LOGIQUE AUTOMATIQUE (Dès que la photo est là, on lance) ---
-if uploaded_file is not None:
+# --- AUTO-START (Dès qu'il y a un fichier, ça part) ---
+if uploaded_file:
+    # Petit message visuel pour dire "J'ai compris"
+    st.toast("📸 Photo reçue ! Analyse en cours...", icon="🚀")
     
-    # 1. On affiche un message d'attente immédiatement
-    with st.spinner("🚀 Photo reçue ! Analyse intelligente en cours..."):
-        
-        # 2. On traite l'image
-        image = Image.open(uploaded_file)
-        
-        # 3. On appelle l'IA
-        resultat = analyser(image)
-        
-        # 4. On affiche le résultat TOUT EN HAUT (Ascenseur magique)
-        st.markdown("---")
-        st.markdown(f"""
-        <div style="
-            background-color: #FFFFFF; 
-            padding: 25px; 
-            border-radius: 15px; 
-            border: 3px solid #2563EB; 
-            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2); 
-            color: #333;
-            animation: fadeIn 0.5s;
-        ">
-            <h3 style="text-align:center; color:#2563EB; margin-top:0;">💡 RÉSULTAT</h3>
-            <hr style="border:1px solid #EEE;">
-            {resultat}
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # 5. On affiche l'image en petit en dessous pour rappel
-        with st.expander("Voir la photo envoyée"):
-            st.image(image, use_container_width=True)
-
-        st.balloons()
+    with st.spinner("Le cerveau de l'IA réfléchit..."):
+        try:
+            image = Image.open(uploaded_file)
+            res = analyser(image)
+            
+            # AFFICHAGE DU RÉSULTAT EN HAUT
+            st.markdown(f"""
+            <div style="background:white; padding:20px; border-radius:15px; border:3px solid #2563EB; box-shadow:0 10px 25px rgba(37,99,235,0.2); margin-top:20px; animation: fadeIn 0.5s;">
+                <h3 style="text-align:center; color:#2563EB; margin:0;">💡 RÉSULTAT</h3>
+                <hr style="border:1px solid #EEE;">
+                {res}
+            </div>
+            """, unsafe_allow_html=True)
+            st.balloons()
+            
+        except Exception as e:
+            st.error("Erreur de lecture de l'image. Réessayez.")
