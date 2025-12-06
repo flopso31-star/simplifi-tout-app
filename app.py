@@ -10,12 +10,30 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. CSS MOBILE OPTIMISÉ ---
+# --- 2. CSS MOBILE COMPACT & PROPRE ---
 st.markdown("""
     <style>
     /* FOND & ESPACEMENT */
     .stApp { background-color: #F8F9FA; color: #333; }
-    .block-container { padding-top: 1rem !important; padding-bottom: 5rem !important; }
+    
+    /* On réduit la marge du haut globalement */
+    .block-container { padding-top: 0.5rem !important; padding-bottom: 5rem !important; }
+
+    /* === OPTIMISATION DE L'ESPACE (NOUVEAU) === */
+    
+    /* 1. On réduit l'espace sous le TITRE */
+    .pro-header { margin-bottom: 5px !important; padding-bottom: 5px !important; }
+    
+    /* 2. On réduit l'espace sous les BOUTONS RADIO (Source) */
+    div[data-testid="stRadio"] {
+        margin-bottom: -15px !important; /* Remonte le bloc suivant */
+    }
+    /* On enlève le padding interne des boutons radio */
+    div[data-testid="stRadio"] > div {
+        gap: 0px !important;
+    }
+
+    /* ========================================= */
 
     /* SWITCH CAMÉRA VISIBLE */
     [data-testid="stCameraInput"] small {
@@ -25,9 +43,9 @@ st.markdown("""
         background-color: white !important;
         color: #2563EB !important;
         border: 1px solid #2563EB !important;
-        padding: 8px !important;
-        border-radius: 20px !important;
-        margin-bottom: 5px !important;
+        padding: 5px !important;
+        border-radius: 15px !important;
+        margin-bottom: 5px !important; /* Espace réduit */
         text-align: center !important;
         font-weight: bold !important;
     }
@@ -39,7 +57,7 @@ st.markdown("""
         object-fit: cover !important;
         border-radius: 12px !important;
         border: 2px solid #E5E7EB;
-        margin-bottom: 10px !important;
+        margin-bottom: 5px !important; /* Espace réduit */
     }
 
     /* BOUTON DÉCLENCHEUR */
@@ -73,14 +91,15 @@ st.markdown("""
         width: 100%;
         font-weight: bold;
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        margin-top: 10px !important;
     }
     
     #MainMenu, footer, header {visibility: hidden;}
     
     .pro-header {
-        text-align: center; margin-bottom: 10px; border-bottom: 2px solid #DDD; padding-bottom: 10px;
+        text-align: center; border-bottom: 1px solid #DDD;
     }
-    .pro-title { font-size: 24px; font-weight: 800; color: #111; margin: 0; font-family: sans-serif; }
+    .pro-title { font-size: 22px; font-weight: 800; color: #111; margin: 0; font-family: sans-serif; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -106,39 +125,30 @@ def analyser(contenu):
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.5-flash')
+        config = genai.types.GenerationConfig(temperature=0.1)
         
-        # CONFIGURATION STRICTE : On réduit la créativité pour augmenter la précision
-        config = genai.types.GenerationConfig(
-            temperature=0.1 # Très bas = Très factuel/précis
-        )
-
-        # PROMPT RENFORCÉ
         prompt = f"""
         ANALYSE VISUELLE ET TEXTUELLE PRÉCISE.
         
-        Tu dois extraire les informations de ce document avec une précision chirurgicale.
-        Ne sois pas vague. Sois explicite.
+        Extrais les infos avec précision chirurgicale (Nom entreprise, logo, etc).
+        
+        1. 🏢 IDENTITÉ (Obligatoire)
+           - CHERCHE PARTOUT (Logo, pied de page).
+           - Nom EXACT de l'entreprise/personne.
+           - Type de document.
 
-        1. 🏢 IDENTITÉ DE L'ÉMETTEUR (Obligatoire)
-           - CHERCHE PARTOUT : Regarde le logo en haut, le pied de page, ou l'adresse.
-           - Écris le NOM EXACT de l'entreprise ou de la personne.
-           - Quel est le type de document ? (Devis, Facture, Lettre, Relance...)
+        2. 💰 ARGENT
+           - Montant "Total TTC" ou "Net à payer".
+           - MONTANT EXACT et DATE ÉCHÉANCE.
+           - Sinon: "Aucun montant réclamé".
 
-        2. 💰 ARGENT ET CHIFFRES
-           - Cherche le montant "Total TTC" ou "Net à payer".
-           - Écris le MONTANT EXACT et la DATE D'ÉCHÉANCE.
-           - S'il n'y a rien à payer, écris explicitement : "Aucun montant réclamé".
-
-        3. ✅ ACTIONS CONCRÈTES (Pas de symboles seuls !)
-           - Ne mets pas juste une icône "validé".
-           - Si c'est un DEVIS : Écris "Vérifier les détails, dater, signer avec la mention 'Bon pour accord' et renvoyer."
-           - Si c'est une FACTURE : Écris "Effectuer le virement sur l'IBAN indiqué avant la date limite."
-           - Si c'est une LETTRE : Résume ce qu'on attend de l'utilisateur.
+        3. ✅ ACTIONS (Phrases complètes)
+           - Devis : "Vérifier, dater, signer..."
+           - Facture : "Payer par virement..."
+           - Lettre : Résumé action.
 
         4. ⚠️ ATTENTION
-           - Lis les petits caractères : y a-t-il des pénalités de retard ? Un renouvellement automatique ?
-        
-        Formate la réponse proprement pour qu'elle soit lisible sur mobile.
+           - Pénalités ? Renouvellement auto ?
         """
         return model.generate_content([prompt, contenu], generation_config=config).text
     except Exception as e: return f"Erreur : {e}"
@@ -149,11 +159,13 @@ st.markdown('<div class="pro-header"><h1 class="pro-title">Simplifi Tout</h1></d
 # ZONE RÉSULTAT EN HAUT
 resultat_container = st.container()
 
-st.info("👆 Changez de caméra via 'Select Device' si besoin.", icon="ℹ️")
+# Message info plus discret
+st.caption("ℹ️ Utilisez 'Select Device' pour la caméra arrière.")
 
-# Menu de choix
+# Menu de choix COMPACT
 src = st.radio("Source", ["Caméra", "Galerie", "Texte"], horizontal=True, label_visibility="collapsed")
-st.markdown("###")
+
+# --- SUPPRESSION DE L'ESPACE ICI (J'ai enlevé le st.markdown("###")) ---
 
 entree = None
 type_input = "txt"
@@ -170,15 +182,15 @@ else:
 
 # Bloc d'action
 if entree:
-    st.markdown("###")
+    # J'ai aussi réduit l'espace ici
+    st.markdown("") 
     
     if st.button("LANCER L'ANALYSE"):
-        with st.spinner("Lecture minutieuse du document..."):
+        with st.spinner("Analyse minutieuse..."):
             
-            donnee_a_envoyer = Image.open(entree) if type_input == "img" else entree
-            res = analyser(donnee_a_envoyer)
+            donnee = Image.open(entree) if type_input == "img" else entree
+            res = analyser(donnee)
             
-            # AFFICHAGE
             with resultat_container:
                 st.markdown(f"""
                 <div style="
@@ -190,7 +202,7 @@ if entree:
                     color: #333;
                     margin-bottom: 20px;
                 ">
-                    <h3 style="text-align:center; color:#2563EB; margin-top:0;">💡 RÉSULTAT DÉTAILLÉ</h3>
+                    <h3 style="text-align:center; color:#2563EB; margin-top:0;">💡 RÉSULTAT</h3>
                     <hr style="border:1px solid #EEE;">
                     {res}
                 </div>
