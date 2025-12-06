@@ -116,4 +116,45 @@ def analyser(img_bytes):
     except Exception as e: return f"Erreur : {e}"
 
 # --- 5. INTERFACE ---
-logo_url
+logo_url = "https://cdn-icons-png.flaticon.com/512/9985/9985702.png"
+
+st.markdown(f"""
+<div class="header-container">
+    <img src="{logo_url}" class="logo-img">
+    <h1 class="app-title">Simplifi Tout</h1>
+    <p class="app-subtitle">Touchez la zone bleue ci-dessous</p>
+</div>
+""", unsafe_allow_html=True)
+
+# BOUTON D'ACTION (Avec un label visible cette fois pour la sécurité)
+uploaded_file = st.file_uploader("Prendre une photo ou choisir un fichier", type=['png', 'jpg', 'jpeg'])
+
+# LOGIQUE AUTOMATIQUE
+if uploaded_file is not None:
+    status = st.status("🚀 Analyse en cours...", expanded=True)
+    
+    try:
+        status.write("Optimisation de l'image...")
+        image_originale = Image.open(uploaded_file)
+        image_optimisee = compresser_image(image_originale)
+        
+        status.write("Lecture intelligente...")
+        res = analyser(image_optimisee)
+        
+        status.update(label="✅ Terminé !", state="complete", expanded=False)
+        
+        # RÉSULTAT
+        st.markdown("---")
+        st.markdown(f"""
+        <div style="
+            background: white; padding: 25px; border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid #E5E7EB; margin-top: 10px;
+        ">
+            {res}
+        </div>
+        """, unsafe_allow_html=True)
+        st.balloons()
+        
+    except Exception as e:
+        status.update(label="❌ Erreur", state="error")
+        st.error(f"Erreur : {e}")
