@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. CSS MOBILE (CLEAN & VISIBLE) ---
+# --- 2. CSS MOBILE OPTIMISÉ ---
 st.markdown("""
     <style>
     /* FOND & ESPACEMENT */
@@ -62,12 +62,12 @@ st.markdown("""
         display: block;
     }
 
-    /* BOUTON ANALYSE (VERT) */
+    /* BOUTON ANALYSE */
     .stButton>button {
         background-color: #10B981; 
         color: white !important;
         height: 60px;
-        font-size: 20px; /* Plus gros */
+        font-size: 20px;
         border-radius: 12px;
         border: none;
         width: 100%;
@@ -75,10 +75,8 @@ st.markdown("""
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
     
-    /* CACHER ÉLÉMENTS INUTILES */
     #MainMenu, footer, header {visibility: hidden;}
     
-    /* TITRE */
     .pro-header {
         text-align: center; margin-bottom: 10px; border-bottom: 2px solid #DDD; padding-bottom: 10px;
     }
@@ -102,36 +100,54 @@ with st.sidebar:
             st.session_state.api_key = k
             st.rerun()
 
-# --- 4. CERVEAU IA (PROMPT UNIVERSEL) ---
+# --- 4. CERVEAU IA (MODE CHIRURGICAL) ---
 def analyser(contenu):
-    if not api_key: return "⛔ Clé manquante. Vérifiez les paramètres."
+    if not api_key: return "⛔ Clé manquante."
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.5-flash')
         
-        # PROMPT SIMPLIFIÉ "Monsieur et Madame tout le monde"
+        # CONFIGURATION STRICTE : On réduit la créativité pour augmenter la précision
+        config = genai.types.GenerationConfig(
+            temperature=0.1 # Très bas = Très factuel/précis
+        )
+
+        # PROMPT RENFORCÉ
         prompt = f"""
-        Tu es un assistant personnel bienveillant.
-        Ta mission : Lire ce document et l'expliquer le plus simplement possible à quelqu'un qui déteste l'administratif.
+        ANALYSE VISUELLE ET TEXTUELLE PRÉCISE.
         
-        Réponds directement (sans phrases d'intro) avec cette structure :
+        Tu dois extraire les informations de ce document avec une précision chirurgicale.
+        Ne sois pas vague. Sois explicite.
+
+        1. 🏢 IDENTITÉ DE L'ÉMETTEUR (Obligatoire)
+           - CHERCHE PARTOUT : Regarde le logo en haut, le pied de page, ou l'adresse.
+           - Écris le NOM EXACT de l'entreprise ou de la personne.
+           - Quel est le type de document ? (Devis, Facture, Lettre, Relance...)
+
+        2. 💰 ARGENT ET CHIFFRES
+           - Cherche le montant "Total TTC" ou "Net à payer".
+           - Écris le MONTANT EXACT et la DATE D'ÉCHÉANCE.
+           - S'il n'y a rien à payer, écris explicitement : "Aucun montant réclamé".
+
+        3. ✅ ACTIONS CONCRÈTES (Pas de symboles seuls !)
+           - Ne mets pas juste une icône "validé".
+           - Si c'est un DEVIS : Écris "Vérifier les détails, dater, signer avec la mention 'Bon pour accord' et renvoyer."
+           - Si c'est une FACTURE : Écris "Effectuer le virement sur l'IBAN indiqué avant la date limite."
+           - Si c'est une LETTRE : Résume ce qu'on attend de l'utilisateur.
+
+        4. ⚠️ ATTENTION
+           - Lis les petits caractères : y a-t-il des pénalités de retard ? Un renouvellement automatique ?
         
-        1. 📄 C'EST QUOI ? (En 1 phrase simple : Qui écrit et pourquoi ?)
-        2. 💰 ARGENT (Y a-t-il quelque chose à payer ? Si OUI : Affiche le MONTANT et la DATE LIMITE en TRÈS GRAS et GROS. Si NON : Écris "Rien à payer ✅")
-        3. ✅ À FAIRE (Liste les actions. Si rien à faire, dis "Tu peux classer ce document 📂")
-        4. ⚠️ ATTENTION (S'il y a un piège ou une pénalité, dis-le clairement. Sinon n'écris rien.)
-        
-        Ton ton doit être clair, rassurant et direct.
+        Formate la réponse proprement pour qu'elle soit lisible sur mobile.
         """
-        return model.generate_content([prompt, contenu]).text
+        return model.generate_content([prompt, contenu], generation_config=config).text
     except Exception as e: return f"Erreur : {e}"
 
 # --- 5. INTERFACE ---
 st.markdown('<div class="pro-header"><h1 class="pro-title">Simplifi Tout</h1></div>', unsafe_allow_html=True)
 
-# --- ASTUCE UX : ON CRÉE LA ZONE DE RÉSULTAT ICI, TOUT EN HAUT ---
+# ZONE RÉSULTAT EN HAUT
 resultat_container = st.container()
-# ---------------------------------------------------------------
 
 st.info("👆 Changez de caméra via 'Select Device' si besoin.", icon="ℹ️")
 
@@ -142,7 +158,6 @@ st.markdown("###")
 entree = None
 type_input = "txt"
 
-# Logique d'affichage
 if src == "Caméra":
     entree = st.camera_input("Photo", label_visibility="visible")
     type_input = "img"
@@ -155,37 +170,29 @@ else:
 
 # Bloc d'action
 if entree:
-    # PLUS DE SLIDER ! On va droit au but.
     st.markdown("###")
     
     if st.button("LANCER L'ANALYSE"):
-        with st.spinner("Lecture du document en cours..."):
+        with st.spinner("Lecture minutieuse du document..."):
             
-            # Préparation
             donnee_a_envoyer = Image.open(entree) if type_input == "img" else entree
-            
-            # Analyse
             res = analyser(donnee_a_envoyer)
             
-            # --- AFFICHAGE MAGIQUE EN HAUT DE PAGE ---
+            # AFFICHAGE
             with resultat_container:
                 st.markdown(f"""
                 <div style="
                     background-color: #FFFFFF; 
-                    padding: 25px; 
+                    padding: 20px; 
                     border-radius: 15px; 
                     border: 3px solid #2563EB; 
                     box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2); 
                     color: #333;
                     margin-bottom: 20px;
-                    animation: fadeIn 0.5s;
                 ">
-                    <h3 style="text-align:center; color:#2563EB; margin-top:0;">💡 RÉSULTAT</h3>
+                    <h3 style="text-align:center; color:#2563EB; margin-top:0;">💡 RÉSULTAT DÉTAILLÉ</h3>
                     <hr style="border:1px solid #EEE;">
                     {res}
                 </div>
                 """, unsafe_allow_html=True)
-                
-                # Petit message de succès pour confirmer que ça a marché
                 st.balloons()
-
